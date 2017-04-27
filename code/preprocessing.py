@@ -25,11 +25,12 @@ def load_dataset(filename, separator):
 def has_empty(line):
     for l in line:
         if not l.strip():
-            return False
+            return True
 
 def main():
     training_file = os.path.join(data_dir, file_name)
     load_dataset(training_file, "::")
+    #print has_empty(['', '  ', 'd'])
     print "len(user_id) = %d, len(movieid_list) = %d, len(ratings_list) = %d" % (len(userid_list), len(movieid_list), len(ratings_list))
 
 start_time = time.time()
