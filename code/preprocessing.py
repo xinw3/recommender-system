@@ -17,7 +17,7 @@ def load_dataset(filename, separator):
             if has_empty(line):
                 continue
             else:
-                print line
+                #print line
                 userid_list.append(line[0])
                 movieid_list.append(line[1])
                 ratings_list.append(line[2])
