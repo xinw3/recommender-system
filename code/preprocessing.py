@@ -9,9 +9,10 @@ ratings_list = []
 
 def load_dataset(filename, separator):
     with open(filename, 'r') as training_data:
-        print 'in load_dataset'
+        count = 0
         for line in training_data:
-            line = line.split(separator)[:3]
+            count += 1
+            line = line.rstrip('\n').split(separator)[:3]
             if has_empty(line):
                 continue
             else:
@@ -19,6 +20,7 @@ def load_dataset(filename, separator):
                 userid_list.append(line[0])
                 movieid_list.append(line[1])
                 ratings_list.append(line[2])
+        print 'line numbers: ', count
 
 def has_empty(line):
     for l in line:
