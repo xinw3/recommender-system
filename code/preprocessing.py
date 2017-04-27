@@ -1,6 +1,7 @@
 import os
 import time
 
+# TODO: build matrix
 data_dir = os.path.join('../', 'RSdata/')
 file_name = 'training_rating.dat'
 userid_list = []
