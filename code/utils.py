@@ -34,6 +34,7 @@ def has_empty(line):
     for l in line:
         if not l.strip():
             return True
+    return False
 
 def RMSE(true_ratings, predict_ratings):
     num_test = predict_ratings.shape[0];
