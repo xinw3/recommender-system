@@ -149,6 +149,7 @@ def main():
         lossVal = loss(U, V, userMovieDict)
         print lossVal
 
+    # TODO: what's the dot product right now?
     K = U.T.dot(V)
 
     query_movieid_list, query_userid_list = preprocess_test_file()
