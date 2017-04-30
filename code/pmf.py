@@ -42,10 +42,6 @@ def preprocess_training_file():
                 userid_list.append(int(elements[0]))
                 movieid_list.append(int(elements[1]))
                 rating_list.append(int(elements[2]))
-    # if has_empty(elements):
-            #     continue
-            # else:
-
 
     training_data.close()
 
@@ -159,7 +155,6 @@ def main():
             output_fd.write(str(val ))
         output_fd.write("\n")
     output_fd.close()
-
 
 start_time = time.time()
 main()
