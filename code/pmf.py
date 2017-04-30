@@ -4,6 +4,7 @@ from sklearn import preprocessing
 from numpy import linalg as LA
 import numpy as np
 import time
+from scipy.special import expit
 
 data_dir = os.path.join('../', 'RSdata/')
 training_file = os.path.join(data_dir, "training_rating.dat")
@@ -62,14 +63,18 @@ def preprocess_training_file():
     return userMovieDict, number_users, number_movies, averageRating
 
 def has_empty(elements):
+    '''
+    Output: if there is empty elements, return True else False
+    '''
     for e in elements:
         if not e.strip():
             return True
     return False
 
+
 def loss(U, V, userMovieDict):
     loss = 0
-    product = U.T.dot(V)
+    product = expit(U.T.dot(V))
 
     for i in range (0, product.shape[0]):
         for j in range(0, product.shape[1]):
