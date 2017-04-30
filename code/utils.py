@@ -37,9 +37,9 @@ def has_empty(line):
     return False
 
 def RMSE(true_ratings, predict_ratings):
-    num_test = predict_ratings.shape[0];
-    squared_sum_error = np.sum(np.square(predict_ratings - true_ratings))
-    rmse = np.sqrt(np.divide(squared_sum_error, num_test - 1))
+    num_ratings = predict_ratings.shape[0];
+    sum_squared_error = np.sum(np.square(predict_ratings - true_ratings))
+    rmse = np.sqrt(np.divide(sum_squared_error, num_ratings - 1))
     return rmse
 
 def main():
