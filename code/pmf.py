@@ -48,19 +48,18 @@ def preprocess_training_file():
 
     number_users = max(userid_list) + 1
     number_movies = max(movieid_list) + 1
-    averageRating = sum (rating_list)/float(len(rating_list))
+    rating_list = normalize_ratings(rating_list, 5)
 
     userMovieDict  = dict()
     for i in range(0, len(userid_list)):
         user = userid_list[i]
         movie = movieid_list[i]
-        rating = rating_list[i] - averageRating
         movieRatingsDict = dict()
         if user in userMovieDict:
             movieRatingsDict = userMovieDict[user]
-        movieRatingsDict[movie] = rating
+        movieRatingsDict[movie] = rating_list[i]
         userMovieDict[user] = movieRatingsDict
-    return userMovieDict, number_users, number_movies, averageRating
+    return userMovieDict, number_users, number_movies
 
 def has_empty(elements):
     '''
@@ -71,6 +70,16 @@ def has_empty(elements):
             return True
     return False
 
+def normalize_ratings(ratings, K):
+    '''
+    Input: ratings: ratings list
+                 K: The upper bound of ratings
+    Output: normalized value of ratings.[0, 1]
+    '''
+    for r in ratings:
+        r = (r - 1) / (K - 1)
+
+    return ratings
 
 def loss(U, V, userMovieDict):
     loss = 0
@@ -128,7 +137,7 @@ def ALS(U, V, userMovieDict):
     return U, V
 
 def main():
-    userMovieDict, number_users, number_movies, averageRating = preprocess_training_file()
+    userMovieDict, number_users, number_movies = preprocess_training_file()
 
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
@@ -148,16 +157,12 @@ def main():
     for userid in query_userid_list:
         movieid = query_movieid_list[movieid_counter]
         movieid_counter = movieid_counter + 1
-        if (userid >= number_users):
-            output_fd.write(str(averageRating ))
+        # TODO: delete averageRating, but what if userid is larger than number_users
+        # if (userid >= number_users):
+        #     output_fd.write(str(averageRating ))
 
-        else:
-            val = K[userid][movieid] + averageRating
-            if (val < 1):
-                val = 1
-            elif (val > 5):
-                val = 5
-            output_fd.write(str(val ))
+        val = K[userid][movieid]
+        output_fd.write(str(val))
         output_fd.write("\n")
     output_fd.close()
 
