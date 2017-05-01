@@ -5,8 +5,8 @@ from numpy import linalg as LA
 import numpy as np
 import time
 from scipy.special import expit
-from sklearn.model_selection import train_test_split
 import random
+import pickle
 
 data_dir = os.path.join('../', 'RSdata/')
 training_file = os.path.join(data_dir, "training_rating.dat")
@@ -177,23 +177,28 @@ def main():
 
     lossVal = loss(U, V, userMovieDict)
     print lossVal
-    for i in range (0, 100):
+    for i in range (0, 10):
         U, V = ALS(U, V, userMovieDict)
+        pickle.dump(U, open("U"+str(i), "wb"))
+        pickle.dump(V, open("V"+str(i), "wb"))
         lossVal = loss(U, V, userMovieDict)
         print lossVal
-    # TODO: Quicken ALS and Loss further ? Bettwe way to compose Indicator matrix?
+    #U = pickle.load(open("U1", "rb"))
+    #V = pickle.load(open("V1", "rb"))
+    #print U.shape, V.shape
+    
     # TODO: Do we need to scale back?
-    R_predict = U.T.dot(V)
-    valid_matrix_coo = coo_matrix((valid_rating_list, (valid_userid_list, valid_movieid_list)),
+    #R_predict = U.T.dot(V)
+    #valid_matrix_coo = coo_matrix((valid_rating_list, (valid_userid_list, valid_movieid_list)),
                     shape=(valid_number_users, valid_number_movies), dtype='float32')
 
     # compute rmse using validation set
     # TODO: RMSE is not supposed to use in this way
-    movieid_counter = 0
-    for userid in valid_userid_list:
-        movieid = valid_movieid_list[movieid_counter]
-        rmse = RMSE(valid_matrix_coo[userid][movieid], R_predict[userid][movieid])
-        print 'RMSE', rmse
+    #movieid_counter = 0
+    #for userid in valid_userid_list:
+    #    movieid = valid_movieid_list[movieid_counter]
+    #    rmse = RMSE(valid_matrix_coo[userid][movieid], R_predict[userid][movieid])
+    #    print 'RMSE', rmse
 
     # TODO: write to result file
     # test_movieid_list, test_userid_list = preprocess_test_file(test_file)
