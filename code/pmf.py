@@ -18,21 +18,21 @@ output_file = os.path.join(data_dir, "result.csv")
 Tunable parameters
 '''
 D = 50             #number of factors
-eta = 0.01         #learning rate
+eta = 0.0008         #learning rate
 lambdaU = 0.1
 lambdaV = 0.1
 maxRating = 5
-iter = 1
+
 def preprocess_test_file(test_file):
     movieid_list = []
     userid_list = []
     with open(test_file, "r") as test_data:
         for line in test_data:
-            elements = line.split(" ")
-            movieid_list.append(int(elements[0]))
-            userid_list.append(int(elements[1]))
+            elements = line.rstrip("\n").split(" ")
+            userid_list.append(int(elements[0]))
+            movieid_list.append(int(elements[1]))
         test_data.close()
-    return movieid_list, userid_list
+    return userid_list, movieid_list
 
 # Splits each line into userid, movieid and rating
 # Generate lists for these three items
@@ -108,6 +108,16 @@ def normalize_ratings(ratings):
         ratings[i] = float((ratings[i] - 1)) / (K - 1)
     return ratings
 
+def nonnormalize_ratings(ratings):
+    for i in range(0, ratings.shape[0]):
+        for j in range (0, ratings.shape[1]):
+	    ratings[i][j] = (ratings[i][j] * (maxRating - 1) ) + 1
+	    if (ratings[i][j] > 5):
+                ratings[i][j] = 5
+            if (ratings[i][j] < 1):
+                ratings[i][j] = 1
+    return ratings
+
 def loss(U, V, userMovieDict):
     loss = 0
     product = expit(U.T.dot(V))
@@ -165,27 +175,33 @@ def ALS(U, V, userMovieDict):
     return U, V
     
 def main():
-    training_data, validation_data = split_training_data(training_file)
-    training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
-    valid_userid_list, valid_movieid_list, valid_rating_list = preprocess_training_file(validation_data)
+    #training_data, validation_data = split_training_data(training_file)
+    #training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
+    #valid_userid_list, valid_movieid_list, valid_rating_list = preprocess_training_file(validation_data)
 
-    userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
-    valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
+    #userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
+    #valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
 
-    U = np.random.rand(D, number_users)
-    V = np.random.rand(D, number_movies)
+    #U = np.random.rand(D, number_users)
+    #V = np.random.rand(D, number_movies)
 
-    lossVal = loss(U, V, userMovieDict)
-    print lossVal
-    for i in range (0, 10):
-        U, V = ALS(U, V, userMovieDict)
-        pickle.dump(U, open("U"+str(i), "wb"))
-        pickle.dump(V, open("V"+str(i), "wb"))
-        lossVal = loss(U, V, userMovieDict)
-        print lossVal
-    #U = pickle.load(open("U1", "rb"))
-    #V = pickle.load(open("V1", "rb"))
-    #print U.shape, V.shape
+    userid_list, movieid_list = preprocess_test_file(test_file)
+    U = pickle.load(open("U64", "rb"))
+    V = pickle.load(open("V64", "rb"))
+    ratings = U.T.dot(V)
+    ratings = nonnormalize_ratings(ratings)	
+    for i in range(0, len(userid_list)):
+        user = userid_list[i]
+        movie = movieid_list[i]
+        print ratings[user - 1][movie - 1]
+    #lossVal = loss(U, V, userMovieDict)
+    #print lossVal
+    #for i in range (45, 65):
+    #    U, V = ALS(U, V, userMovieDict)
+    #    pickle.dump(U, open("U"+str(i), "wb"))
+    #    pickle.dump(V, open("V"+str(i), "wb"))
+    #    lossVal = loss(U, V, userMovieDict)
+    #    print lossVal
     
     # TODO: Do we need to scale back?
     #R_predict = U.T.dot(V)
@@ -212,6 +228,4 @@ def main():
     #     output_fd.write("\n")
     # output_fd.close()
 
-start_time = time.time()
 main()
-print("--- %s seconds ---" % (time.time() - start_time))
