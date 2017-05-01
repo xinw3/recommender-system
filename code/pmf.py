@@ -178,6 +178,7 @@ def main():
                     shape=(valid_number_users, valid_number_movies), dtype='float32')
 
     # compute rmse using validation set
+    # TODO: RMSE are not supposed to use in this way
     movieid_counter = 0
     for userid in valid_userid_list:
         movieid = valid_movieid_list[movieid_counter]
