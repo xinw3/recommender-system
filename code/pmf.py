@@ -116,9 +116,9 @@ def loss(U, V, userMovieDict):
             if (i+1) in userMovieDict and (j+1) in userMovieDict[i+1]:
                 loss = loss + (userMovieDict[i+1][j+1] - product[i][j]) ** 2
 
-    loss = loss/2
-    loss = loss +  (lambdaU/2) * (LA.norm(U, 'fro') ** 2)
-    loss = loss + (lambdaV/2) * (LA.norm(V, 'fro') ** 2)
+    loss = loss * 1.0/2
+    loss = loss +  (lambdaU * 1.0/2) * (LA.norm(U, 'fro') ** 2)
+    loss = loss + (lambdaV * 1.0/2) * (LA.norm(V, 'fro') ** 2)
     return loss
 
 def RMSE(true_ratings, predict_ratings):
@@ -128,40 +128,55 @@ def RMSE(true_ratings, predict_ratings):
     return rmse
 
 def ALS(U, V, userMovieDict):
-    subtractionMatrix = np.ndarray(shape=(D,1))
+    print "Calculating New U"
     product = U.T.dot(V)
-
     product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
-
     for i in range (0, product.shape[0]):
-        derivative = np.zeros((D, 1))
         for j in range(0, product.shape[1]):
-            if i in userMovieDict and j in userMovieDict[i]:
-                Vj =  np.reshape(V[:,j], (D, 1))
-                derivative = derivative + (product[i][j] - userMovieDict[i][j]) * product_derivative[i][j] * Vj
-        Ui = np.reshape(U[:,i], (D, 1))
-        derivative = derivative + (lambdaU * Ui)
-        subtractionMatrix = np.hstack((subtractionMatrix , eta * derivative))
+            if (i+1) in userMovieDict and (j+1) in userMovieDict[i+1]:
+		product[i][j] = product[i][j] - userMovieDict[i+1][j+1]
+	    else:
+		product[i][j] = 0
 
+    derivative_matrix = np.multiply(product, product_derivative)
+   
+    subtractionMatrix = np.ndarray(shape=(D,1)) 
+    for i in range(0, derivative_matrix.shape[0]):
+	summation = np.zeros((D,1))
+        for j in range(0, derivative_matrix.shape[1]):
+	    Vj =  np.reshape(V[:,j], (D, 1))
+	    Vj = Vj * derivative_matrix[i][j]
+            summation = summation + Vj
+        subtractionMatrix = np.hstack(( subtractionMatrix, summation))
     subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
-    U = U - subtractionMatrix
-
-    subtractionMatrix = np.ndarray(shape=(D,1))
+    subtractionMatrix = subtractionMatrix + (lambdaU * U)
+    U = U - (eta *subtractionMatrix)
+    
+    print "Calculating New V"
     product = U.T.dot(V)
-    product_derivative = np.multiply(expit(product), 1 - expit(product))
+    product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
+    for i in range (0, product.shape[0]):
+        for j in range(0, product.shape[1]):
+            if (i+1) in userMovieDict and (j+1) in userMovieDict[i+1]:
+		product[i][j] = product[i][j] - userMovieDict[i+1][j+1]
+	    else:
+		product[i][j] = 0
 
-    for j in range (0, product.shape[1]):
-        derivative = np.zeros((D, 1))
-        for i in range(0, product.shape[0]):
-            if i in userMovieDict and j in userMovieDict[i]:
-                Ui =  np.reshape(U[:,i], (D, 1))
-                derivative = derivative + (product[i][j] - userMovieDict[i][j]) * product_derivative[i][j] * Ui
-        Vj = np.reshape(V[:,j], (D, 1))
-        derivative = derivative + (lambdaV * Vj)
-        subtractionMatrix = np.hstack((subtractionMatrix , eta * derivative))
-
+    derivative_matrix = np.multiply(product, product_derivative)
+    
+    subtractionMatrix = np.ndarray(shape=(D,1))
+    for j in range (0, derivative_matrix.shape[1]):
+        summation = np.zeros((D, 1))
+        for i in range(0, derivative_matrix.shape[0]):
+            Ui =  np.reshape(U[:,i], (D, 1))
+            Ui = Ui * derivative_matrix[i][j]
+            summation = summation + Ui
+        subtractionMatrix = np.hstack((subtractionMatrix , summation))
     subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
-    V = V - subtractionMatrix
+    subtractionMatrix  = subtractionMatrix + (lambdaV * V)
+    V = V - (eta * subtractionMatrix)
+    
+    print "ALS Round done"
     return U, V
 
 def main():
@@ -181,7 +196,7 @@ def main():
         U, V = ALS(U, V, userMovieDict)
         lossVal = loss(U, V, userMovieDict)
         print lossVal
-
+    # TODO: Quicken ALS and Loss further ? Bettwe way to compose Indicator matrix?
     # TODO: Do we need to scale back?
     R_predict = U.T.dot(V)
     valid_matrix_coo = coo_matrix((valid_rating_list, (valid_userid_list, valid_movieid_list)),
