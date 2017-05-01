@@ -75,8 +75,6 @@ def get_dictionaries(userid_list, movieid_list, rating_list):
         userMovieDict[user] = movieRatingsDict
     return userMovieDict, number_users, number_movies
 
-
-
 def has_empty(elements):
     '''
     Output: if there is empty elements, return True else False
@@ -170,11 +168,11 @@ def main():
     # TODO: what's the dot product right now?
     K = U.T.dot(V)
 
-    query_movieid_list, query_userid_list = preprocess_test_file()
+    test_movieid_list, test_userid_list = preprocess_test_file()
     output_fd = open(output_file, 'w')
     movieid_counter = 0
-    for userid in query_userid_list:
-        movieid = query_movieid_list[movieid_counter]
+    for userid in test_userid_list:
+        movieid = test_movieid_list[movieid_counter]
         movieid_counter = movieid_counter + 1
         # TODO: delete averageRating, but what if userid is larger than number_users
         # if (userid >= number_users):
