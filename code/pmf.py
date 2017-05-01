@@ -20,7 +20,7 @@ D = 50             #number of factors
 eta = 0.0006    #learning rate
 l = 0.1            #lambdaU, lambdaV
 
-def preprocess_test_file():
+def preprocess_test_file(test_file):
     movieid_list = []
     userid_list = []
     with open(test_file, "r") as test_data:
@@ -152,8 +152,12 @@ def ALS(U, V, userMovieDict):
 
 def main():
     training_data, validation_data = split_training_data(training_file)
+
     training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
+    valid_userid_list, valid_movieid_list, valid_rating_list = preprocess_training_file(validation_data)
+
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
+    valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
 
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
@@ -165,23 +169,29 @@ def main():
         lossVal = loss(U, V, userMovieDict)
         print lossVal
 
-    # TODO: what's the dot product right now?
+    # TODO: Do we need to scale back?
     K = U.T.dot(V)
+    valid_matrix_coo = coo_matrix((valid_rating_list, (valid_userid_list, valid_movieid_list)),
+                    shape=(valid_number_users, valid_number_movies), dtype='float32')
 
-    test_movieid_list, test_userid_list = preprocess_test_file()
-    output_fd = open(output_file, 'w')
+    # compute rmse using validation set
     movieid_counter = 0
-    for userid in test_userid_list:
-        movieid = test_movieid_list[movieid_counter]
-        movieid_counter = movieid_counter + 1
-        # TODO: delete averageRating, but what if userid is larger than number_users
-        # if (userid >= number_users):
-        #     output_fd.write(str(averageRating ))
+    for userid in valid_userid_list:
+        movieid = valid_movieid_list[movieid_counter]
+        rmse = RMSE(valid_matrix_coo[userid][movieid], K[userid][movieid])
+        print 'RMSE', rmse
 
-        val = K[userid][movieid]
-        output_fd.write(str(val))
-        output_fd.write("\n")
-    output_fd.close()
+    # TODO: write to result file
+    # test_movieid_list, test_userid_list = preprocess_test_file(test_file)
+    # output_fd = open(output_file, 'w')
+    # movieid_counter = 0
+    # for userid in test_userid_list:
+    #     movieid = test_movieid_list[movieid_counter]
+    #     movieid_counter = movieid_counter + 1
+    #     val = K[userid][movieid]
+    #     output_fd.write(str(val))
+    #     output_fd.write("\n")
+    # output_fd.close()
 
 start_time = time.time()
 main()
