@@ -190,7 +190,7 @@ def main():
     # TODO: Do we need to scale back?
     #R_predict = U.T.dot(V)
     #valid_matrix_coo = coo_matrix((valid_rating_list, (valid_userid_list, valid_movieid_list)),
-                    shape=(valid_number_users, valid_number_movies), dtype='float32')
+    #                shape=(valid_number_users, valid_number_movies), dtype='float32')
 
     # compute rmse using validation set
     # TODO: RMSE is not supposed to use in this way
