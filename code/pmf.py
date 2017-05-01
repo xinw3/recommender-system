@@ -65,7 +65,7 @@ def split_training_data(original_training_file):
 
 def get_dictionaries(userid_list, movieid_list, rating_list):
     number_users = max(userid_list)
-    number_movies = max(movieid_list) 
+    number_movies = max(movieid_list)
     rating_list = normalize_ratings(rating_list, 5)
 
     userMovieDict  = dict()
@@ -115,7 +115,7 @@ def loss(U, V, userMovieDict):
     return loss
 
 def RMSE(true_ratings, predict_ratings):
-    num_ratings = (predict_ratings.shape[0] - 1) * (predict_ratings.shape[1] - 1);
+    num_ratings = predict_ratings.shape[0] * predict_ratings.shape[1];
     sum_squared_error = np.sum(np.square(predict_ratings - true_ratings))
     rmse = np.sqrt(np.divide(sum_squared_error, num_ratings))
     return rmse
