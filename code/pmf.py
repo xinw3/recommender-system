@@ -18,9 +18,9 @@ output_file = os.path.join(data_dir, "result.csv")
 Tunable parameters
 '''
 D = 50             #number of factors
-eta = 0.01         #learning rate
-lambdaU = 0.1
-lambdaV = 0.1
+eta = 0.5         #learning rate
+lambdaU = 0.0001
+lambdaV = 0.0001
 maxRating = 5
 
 def preprocess_test_file(test_file):
@@ -130,23 +130,23 @@ def RMSE(true_ratings, predict_ratings):
 def ALS(U, V, userMovieDict):
     print "Calculating New U"
     product = U.T.dot(V)
+    diff = np.zeros((product.shape[0], product.shape[1]))
     product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
     for i in range (0, product.shape[0]):
         for j in range(0, product.shape[1]):
             if (i+1) in userMovieDict and (j+1) in userMovieDict[i+1]:
-		product[i][j] = product[i][j] - userMovieDict[i+1][j+1]
-	    else:
-		product[i][j] = 0
+		diff[i][j] = product[i][j] - userMovieDict[i+1][j+1]
 
-    derivative_matrix = np.multiply(product, product_derivative)
+    derivative_matrix = np.multiply(diff, product_derivative)
    
     subtractionMatrix = np.ndarray(shape=(D,1)) 
     for i in range(0, derivative_matrix.shape[0]):
 	summation = np.zeros((D,1))
         for j in range(0, derivative_matrix.shape[1]):
-	    Vj =  np.reshape(V[:,j], (D, 1))
-	    Vj = Vj * derivative_matrix[i][j]
-            summation = summation + Vj
+	    if derivative_matrix[i][j] != 0:
+	    	Vj =  np.reshape(V[:,j], (D, 1))
+	    	Vj = Vj * derivative_matrix[i][j]
+            	summation = summation + Vj
         subtractionMatrix = np.hstack(( subtractionMatrix, summation))
     subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
     subtractionMatrix = subtractionMatrix + (lambdaU * U)
@@ -154,23 +154,23 @@ def ALS(U, V, userMovieDict):
     
     print "Calculating New V"
     product = U.T.dot(V)
+    diff = np.zeros((product.shape[0], product.shape[1]))
     product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
     for i in range (0, product.shape[0]):
         for j in range(0, product.shape[1]):
             if (i+1) in userMovieDict and (j+1) in userMovieDict[i+1]:
-		product[i][j] = product[i][j] - userMovieDict[i+1][j+1]
-	    else:
-		product[i][j] = 0
+		diff[i][j] = product[i][j] - userMovieDict[i+1][j+1]
 
-    derivative_matrix = np.multiply(product, product_derivative)
+    derivative_matrix = np.multiply(diff, product_derivative)
     
     subtractionMatrix = np.ndarray(shape=(D,1))
     for j in range (0, derivative_matrix.shape[1]):
         summation = np.zeros((D, 1))
         for i in range(0, derivative_matrix.shape[0]):
-            Ui =  np.reshape(U[:,i], (D, 1))
-            Ui = Ui * derivative_matrix[i][j]
-            summation = summation + Ui
+	    if derivative_matrix[i][j] != 0:
+            	Ui =  np.reshape(U[:,i], (D, 1))
+            	Ui = Ui * derivative_matrix[i][j]
+            	summation = summation + Ui
         subtractionMatrix = np.hstack((subtractionMatrix , summation))
     subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
     subtractionMatrix  = subtractionMatrix + (lambdaV * V)
