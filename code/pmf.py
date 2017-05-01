@@ -18,7 +18,7 @@ output_file = os.path.join(data_dir, "result.csv")
 Tunable parameters
 '''
 D = 50             #number of factors
-eta = 0.0008         #learning rate
+eta = 0.01         #learning rate
 lambdaU = 0.1
 lambdaV = 0.1
 maxRating = 5
@@ -62,7 +62,9 @@ def split_training_data(original_training_file):
             		continue
             	training_list.append(line)
     training_data.close()
-    validation_indices =  random.sample(range(0, len(training_list)), int(0.05*len(training_list)))
+    #validation_indices =  random.sample(range(0, len(training_list)), int(0.05*len(training_list)))
+    #pickle.dump(validation_indices, open("validation_indices", "wb"))
+    validation_indices = pickle.load(open("validation_indices", "rb"))
     for index in validation_indices:
     	validation_data.append(training_list[index])
     training_data = np.reshape(training_list, (1, len(training_list)))
@@ -131,10 +133,17 @@ def loss(U, V, userMovieDict):
     loss = loss + (lambdaV * 1.0/2) * (LA.norm(V, 'fro') ** 2)
     return loss
 
-def RMSE(true_ratings, predict_ratings):
-    num_ratings = predict_ratings.shape[0] * predict_ratings.shape[1];
-    sum_squared_error = np.sum(np.square(predict_ratings - true_ratings))
-    rmse = np.sqrt(np.divide(sum_squared_error, num_ratings))
+def RMSE(validDict, predicts):
+    rmse = 0.0
+    counter = 0
+    for user in validDict:
+	for movie in validDict[user]:
+	    actualRating = validDict[user][movie]
+	    predictedRating = predicts[user - 1][movie - 1]
+	    rmse = rmse + (actualRating-predictedRating)**2
+            counter = counter + 1
+	    
+    rmse = (rmse * 1.0/counter) ** 0.5		
     return rmse
 
 def ALS(U, V, userMovieDict):
@@ -175,57 +184,52 @@ def ALS(U, V, userMovieDict):
     return U, V
     
 def main():
-    #training_data, validation_data = split_training_data(training_file)
-    #training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
-    #valid_userid_list, valid_movieid_list, valid_rating_list = preprocess_training_file(validation_data)
+    training_data, validation_data = split_training_data(training_file)
+    training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
+    valid_userid_list, valid_movieid_list, valid_rating_list = preprocess_training_file(validation_data)
 
-    #userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
-    #valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
+    userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
+    valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
 
-    #U = np.random.rand(D, number_users)
-    #V = np.random.rand(D, number_movies)
+    U = np.random.rand(D, number_users)
+    V = np.random.rand(D, number_movies)
 
-    userid_list, movieid_list = preprocess_test_file(test_file)
-    U = pickle.load(open("U64", "rb"))
-    V = pickle.load(open("V64", "rb"))
-    ratings = U.T.dot(V)
-    ratings = nonnormalize_ratings(ratings)	
-    for i in range(0, len(userid_list)):
-        user = userid_list[i]
-        movie = movieid_list[i]
-        print ratings[user - 1][movie - 1]
-    #lossVal = loss(U, V, userMovieDict)
-    #print lossVal
-    #for i in range (45, 65):
-    #    U, V = ALS(U, V, userMovieDict)
-    #    pickle.dump(U, open("U"+str(i), "wb"))
-    #    pickle.dump(V, open("V"+str(i), "wb"))
-    #    lossVal = loss(U, V, userMovieDict)
-    #    print lossVal
     
-    # TODO: Do we need to scale back?
-    #R_predict = U.T.dot(V)
-    #valid_matrix_coo = coo_matrix((valid_rating_list, (valid_userid_list, valid_movieid_list)),
-    #                shape=(valid_number_users, valid_number_movies), dtype='float32')
+    predictions = nonnormalize_ratings(U.T.dot(V))
+    lossValTrain = loss(U, V, userMovieDict)
+    rmseTrain = RMSE (userMovieDict, predictions)
+    lossValValid = loss(U, V, valid_user_movie_dict)
+    rmseValid = RMSE(valid_user_movie_dict, predictions)
+    print "Train Loss ", lossValTrain
+    print "Train RMSE ", rmseTrain 
+    print "ValidSet Loss ", lossValValid
+    print "ValidSet RMSE ", rmseValid
+    print ""
 
-    # compute rmse using validation set
-    # TODO: RMSE is not supposed to use in this way
-    #movieid_counter = 0
-    #for userid in valid_userid_list:
-    #    movieid = valid_movieid_list[movieid_counter]
-    #    rmse = RMSE(valid_matrix_coo[userid][movieid], R_predict[userid][movieid])
-    #    print 'RMSE', rmse
-
-    # TODO: write to result file
-    # test_movieid_list, test_userid_list = preprocess_test_file(test_file)
-    # output_fd = open(output_file, 'w')
-    # movieid_counter = 0
-    # for userid in test_userid_list:
-    #     movieid = test_movieid_list[movieid_counter]
-    #     movieid_counter = movieid_counter + 1
-    #     val = R_predict[userid][movieid]
-    #     output_fd.write(str(val))
-    #     output_fd.write("\n")
-    # output_fd.close()
+    for i in range (0, 65):
+        U, V = ALS(U, V, userMovieDict)
+        pickle.dump(U, open("U"+str(i), "wb"))
+        pickle.dump(V, open("V"+str(i), "wb"))
+        predictions = nonnormalize_ratings(U.T.dot(V))
+        lossValTrain = loss(U, V, userMovieDict)
+        rmseTrain = RMSE (userMovieDict, predictions)
+        lossValValid = loss(U, V, valid_user_movie_dict)
+        rmseValid = RMSE(valid_user_movie_dict, predictions)
+        print "Train Loss ", lossValTrain
+        print "Train RMSE ", rmseTrain 
+        print "ValidSet Loss ", lossValValid
+        print "ValidSet RMSE ", rmseValid
+        print ""
+    
+    #TESTING CODE FOLLOWS
+    #userid_list, movieid_list = preprocess_test_file(test_file)
+    #U = pickle.load(open("U64", "rb"))
+    #V = pickle.load(open("V64", "rb"))
+    #ratings = U.T.dot(V)
+    #ratings = nonnormalize_ratings(ratings)	
+    #for i in range(0, len(userid_list)):
+    #    user = userid_list[i]
+    #    movie = movieid_list[i]
+    #    print ratings[user - 1][movie - 1]
 
 main()
