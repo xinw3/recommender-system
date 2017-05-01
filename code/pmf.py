@@ -18,9 +18,9 @@ output_file = os.path.join(data_dir, "result.csv")
 Tunable parameters
 '''
 D = 50             #number of factors
-eta = 0.0006    #learning rate
-lambdaU = 0.1           
-lambdaV = 0.1           
+eta = 0.01         #learning rate
+lambdaU = 0.1
+lambdaV = 0.1
 maxRating = 5
 
 def preprocess_test_file(test_file):
@@ -49,7 +49,7 @@ def preprocess_training_file(training_data):
 
     return userid_list, movieid_list, rating_list
 
-# Removes bad lines from training file and 
+# Removes bad lines from training file and
 # causes split such that 95% data is training
 # and 5% data is for validation
 def split_training_data(original_training_file):
@@ -73,7 +73,7 @@ def split_training_data(original_training_file):
 # Build dictionaries for user-movie ratings
 def get_dictionaries(userid_list, movieid_list, rating_list):
     number_users = max(userid_list)
-    number_movies = max(movieid_list) 
+    number_movies = max(movieid_list)
     rating_list = normalize_ratings(rating_list)
     userMovieDict  = dict()
     for i in range(0, len(userid_list)):
@@ -132,7 +132,7 @@ def ALS(U, V, userMovieDict):
     product = U.T.dot(V)
 
     product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
-    
+
     for i in range (0, product.shape[0]):
         derivative = np.zeros((D, 1))
         for j in range(0, product.shape[1]):
@@ -140,7 +140,7 @@ def ALS(U, V, userMovieDict):
                 Vj =  np.reshape(V[:,j], (D, 1))
                 derivative = derivative + (product[i][j] - userMovieDict[i][j]) * product_derivative[i][j] * Vj
         Ui = np.reshape(U[:,i], (D, 1))
-        derivative = derivative + (l * Ui)
+        derivative = derivative + (lambdaU * Ui)
         subtractionMatrix = np.hstack((subtractionMatrix , eta * derivative))
 
     subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
@@ -157,7 +157,7 @@ def ALS(U, V, userMovieDict):
                 Ui =  np.reshape(U[:,i], (D, 1))
                 derivative = derivative + (product[i][j] - userMovieDict[i][j]) * product_derivative[i][j] * Ui
         Vj = np.reshape(V[:,j], (D, 1))
-        derivative = derivative + (l * Vj)
+        derivative = derivative + (lambdaV * Vj)
         subtractionMatrix = np.hstack((subtractionMatrix , eta * derivative))
 
     subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
