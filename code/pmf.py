@@ -142,8 +142,8 @@ def RMSE(validDict, predicts):
 	    predictedRating = predicts[user - 1][movie - 1]
 	    rmse = rmse + (actualRating-predictedRating)**2
             counter = counter + 1
-	    
-    rmse = (rmse * 1.0/counter) ** 0.5		
+
+    rmse = (rmse * 1.0/counter) ** 0.5
     return rmse
 
 def ALS(U, V, userMovieDict):
@@ -182,7 +182,7 @@ def ALS(U, V, userMovieDict):
     subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
     V = V - (eta * subtractionMatrix)
     return U, V
-    
+
 def main():
     training_data, validation_data = split_training_data(training_file)
     training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
@@ -194,18 +194,6 @@ def main():
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
 
-    
-    predictions = nonnormalize_ratings(U.T.dot(V))
-    lossValTrain = loss(U, V, userMovieDict)
-    rmseTrain = RMSE (userMovieDict, predictions)
-    lossValValid = loss(U, V, valid_user_movie_dict)
-    rmseValid = RMSE(valid_user_movie_dict, predictions)
-    print "Train Loss ", lossValTrain
-    print "Train RMSE ", rmseTrain 
-    print "ValidSet Loss ", lossValValid
-    print "ValidSet RMSE ", rmseValid
-    print ""
-
     for i in range (0, 65):
         U, V = ALS(U, V, userMovieDict)
         pickle.dump(U, open("U"+str(i), "wb"))
@@ -216,17 +204,17 @@ def main():
         lossValValid = loss(U, V, valid_user_movie_dict)
         rmseValid = RMSE(valid_user_movie_dict, predictions)
         print "Train Loss ", lossValTrain
-        print "Train RMSE ", rmseTrain 
+        print "Train RMSE ", rmseTrain
         print "ValidSet Loss ", lossValValid
         print "ValidSet RMSE ", rmseValid
         print ""
-    
+
     #TESTING CODE FOLLOWS
     #userid_list, movieid_list = preprocess_test_file(test_file)
     #U = pickle.load(open("U64", "rb"))
     #V = pickle.load(open("V64", "rb"))
     #ratings = U.T.dot(V)
-    #ratings = nonnormalize_ratings(ratings)	
+    #ratings = nonnormalize_ratings(ratings)
     #for i in range(0, len(userid_list)):
     #    user = userid_list[i]
     #    movie = movieid_list[i]
