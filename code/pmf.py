@@ -18,11 +18,11 @@ output_file = os.path.join(data_dir, "result.csv")
 Tunable parameters
 '''
 D = 50             #number of factors
-eta = 0.5         #learning rate
-lambdaU = 0.0001
+eta = 0.8         #learning rate
+lambdaU = 0.001
 lambdaV = 0.0001
 maxRating = 5
-
+iter = 1
 def preprocess_test_file(test_file):
     movieid_list = []
     userid_list = []
@@ -128,6 +128,10 @@ def RMSE(true_ratings, predict_ratings):
     return rmse
 
 def ALS(U, V, userMovieDict):
+    global eta
+    global iter
+    eta = 0.5 * 1.0/(iter ** 0.5)
+    iter = iter + 1
     print "Calculating New U"
     product = U.T.dot(V)
     diff = np.zeros((product.shape[0], product.shape[1]))
