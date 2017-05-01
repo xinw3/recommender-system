@@ -136,14 +136,15 @@ def ALS(U, V, userMovieDict):
     U = U - subtractionMatrix
 
     subtractionMatrix = np.ndarray(shape=(D,1))
-    product = U.T.dot(V)
+    product = expit(U.T.dot(V))
+    product_derivative = np.multiply(expit(product), 1 - expit(product))
 
     for j in range (0, product.shape[1]):
         derivative = np.zeros((D, 1))
         for i in range(0, product.shape[0]):
             if i in userMovieDict and j in userMovieDict[i]:
                 Ui =  np.reshape(U[:,i], (D, 1))
-                derivative = derivative + (product[i][j] - userMovieDict[i][j]) * Ui
+                derivative = derivative + (product[i][j] - userMovieDict[i][j]) * product_derivative[i][j] * Ui
         Vj = np.reshape(V[:,j], (D, 1))
         derivative = derivative + (l * Vj)
         subtractionMatrix = np.hstack((subtractionMatrix , eta * derivative))
@@ -178,7 +179,7 @@ def main():
                     shape=(valid_number_users, valid_number_movies), dtype='float32')
 
     # compute rmse using validation set
-    # TODO: RMSE are not supposed to use in this way
+    # TODO: RMSE is not supposed to use in this way
     movieid_counter = 0
     for userid in valid_userid_list:
         movieid = valid_movieid_list[movieid_counter]
