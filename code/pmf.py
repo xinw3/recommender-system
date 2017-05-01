@@ -65,8 +65,8 @@ def split_training_data(original_training_file):
     return training_data, validation_data
 
 def get_dictionaries(userid_list, movieid_list, rating_list):
-    number_users = max(userid_list) + 1
-    number_movies = max(movieid_list) + 1
+    number_users = max(userid_list)
+    number_movies = max(movieid_list) 
     rating_list = normalize_ratings(rating_list, 5)
 
     userMovieDict  = dict()
