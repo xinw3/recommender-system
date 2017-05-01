@@ -5,6 +5,7 @@ from numpy import linalg as LA
 import numpy as np
 import time
 from scipy.special import expit
+from sklearn.model_selection import train_test_split
 
 data_dir = os.path.join('../', 'RSdata/')
 training_file = os.path.join(data_dir, "training_rating.dat")
@@ -30,22 +31,35 @@ def preprocess_test_file():
         test_data.close()
     return movieid_list, userid_list
 
-def preprocess_training_file():
+def preprocess_training_file(training_data):
     userid_list = []
     movieid_list = []
     rating_list = []
-    with open(training_file, "r") as training_data:
+
+    for line in training_data:
+        elements = line.rstrip("\n").split("::")
+        if has_empty(elements):
+            continue
+        else:
+            userid_list.append(int(elements[0]))
+            movieid_list.append(int(elements[1]))
+            rating_list.append(int(elements[2]))
+
+    return userid_list, movieid_list, rating_list
+
+def split_training_data(original_training_file):
+    valid_size = 0.25
+    training_list = []
+    with open(original_training_file, "r") as training_data:
         for line in training_data:
-            elements = line.rstrip("\n").split("::")
-            if has_empty(elements):
-                continue
-            else:
-                userid_list.append(int(elements[0]))
-                movieid_list.append(int(elements[1]))
-                rating_list.append(int(elements[2]))
+            training_list.append(line)
 
     training_data.close()
+    training_data, validation_data = train_test_split(training_list, test_size=valid_size, random_state=42)
 
+    return training_data, validation_data
+
+def get_dictionaries(userid_list, movieid_list, rating_list):
     number_users = max(userid_list) + 1
     number_movies = max(movieid_list) + 1
     rating_list = normalize_ratings(rating_list, 5)
@@ -60,6 +74,8 @@ def preprocess_training_file():
         movieRatingsDict[movie] = rating_list[i]
         userMovieDict[user] = movieRatingsDict
     return userMovieDict, number_users, number_movies
+
+
 
 def has_empty(elements):
     '''
@@ -137,7 +153,9 @@ def ALS(U, V, userMovieDict):
     return U, V
 
 def main():
-    userMovieDict, number_users, number_movies = preprocess_training_file()
+    training_data, validation_data = split_training_data(training_file)
+    training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
+    userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
 
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
