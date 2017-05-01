@@ -20,6 +20,7 @@ Tunable parameters
 D = 50             #number of factors
 eta = 0.0006    #learning rate
 l = 0.1            #lambdaU, lambdaV
+maxRating = 5
 
 def preprocess_test_file(test_file):
     movieid_list = []
@@ -67,8 +68,7 @@ def split_training_data(original_training_file):
 def get_dictionaries(userid_list, movieid_list, rating_list):
     number_users = max(userid_list)
     number_movies = max(movieid_list) 
-    rating_list = normalize_ratings(rating_list, 5)
-
+    rating_list = normalize_ratings(rating_list)
     userMovieDict  = dict()
     for i in range(0, len(userid_list)):
         user = userid_list[i]
@@ -89,15 +89,15 @@ def has_empty(elements):
             return True
     return False
 
-def normalize_ratings(ratings, K):
+def normalize_ratings(ratings):
     '''
     Input: ratings: ratings list
                  K: The upper bound of ratings
     Output: normalized value of ratings.[0, 1]
     '''
-    for i in range(len(ratings)):
+    K = maxRating
+    for i in range(0, len(ratings)):
         ratings[i] = float((ratings[i] - 1)) / (K - 1)
-
     return ratings
 
 def loss(U, V, userMovieDict):
@@ -165,7 +165,7 @@ def main():
 
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
     valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
-
+    #NOTE: Code checked till here
 
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
