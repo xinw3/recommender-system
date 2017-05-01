@@ -33,6 +33,8 @@ def preprocess_test_file(test_file):
         test_data.close()
     return movieid_list, userid_list
 
+# Splits each line into userid, movieid and rating
+# Generate lists for these three items
 def preprocess_training_file(training_data):
     userid_list = []
     movieid_list = []
@@ -46,6 +48,9 @@ def preprocess_training_file(training_data):
 
     return userid_list, movieid_list, rating_list
 
+# Removes bad lines from training file and 
+# causes split such that 95% data is training
+# and 5% data is for validation
 def split_training_data(original_training_file):
     training_list = []
     validation_data = []
@@ -64,6 +69,7 @@ def split_training_data(original_training_file):
     training_data = list(training_data)
     return training_data, validation_data
 
+# Build dictionaries for user-movie ratings
 def get_dictionaries(userid_list, movieid_list, rating_list):
     number_users = max(userid_list)
     number_movies = max(movieid_list) 
@@ -79,6 +85,7 @@ def get_dictionaries(userid_list, movieid_list, rating_list):
         userMovieDict[user] = movieRatingsDict
     return userMovieDict, number_users, number_movies
 
+# Helper function to remove bad lines
 def has_empty(elements):
     '''
     Output: if there is empty elements, return True else False
@@ -88,6 +95,7 @@ def has_empty(elements):
             return True
     return False
 
+# Normalises ratings to [0,1] scale
 def normalize_ratings(ratings):
     '''
     Input: ratings: ratings list
