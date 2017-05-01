@@ -19,7 +19,8 @@ Tunable parameters
 '''
 D = 50             #number of factors
 eta = 0.0006    #learning rate
-l = 0.1            #lambdaU, lambdaV
+lambdaU = 0.1           
+lambdaV = 0.1           
 maxRating = 5
 
 def preprocess_test_file(test_file):
@@ -110,16 +111,14 @@ def normalize_ratings(ratings):
 def loss(U, V, userMovieDict):
     loss = 0
     product = expit(U.T.dot(V))
-
     for i in range (0, product.shape[0]):
         for j in range(0, product.shape[1]):
             if i in userMovieDict and j in userMovieDict[i]:
                 loss = loss + (userMovieDict[i][j] - product[i][j]) ** 2
 
     loss = loss/2
-    loss = loss +  (l/2) * (LA.norm(U, 'fro') ** 2)
-    loss = loss + (l/2) * (LA.norm(V, 'fro') ** 2)
-
+    loss = loss +  (lambdaU/2) * (LA.norm(U, 'fro') ** 2)
+    loss = loss + (lambdaV/2) * (LA.norm(V, 'fro') ** 2)
     return loss
 
 def RMSE(true_ratings, predict_ratings):
@@ -130,10 +129,10 @@ def RMSE(true_ratings, predict_ratings):
 
 def ALS(U, V, userMovieDict):
     subtractionMatrix = np.ndarray(shape=(D,1))
-    product = expit(U.T.dot(V))
+    product = U.T.dot(V)
 
     product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
-
+    
     for i in range (0, product.shape[0]):
         derivative = np.zeros((D, 1))
         for j in range(0, product.shape[1]):
@@ -172,8 +171,8 @@ def main():
 
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
     valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
-    #NOTE: Code checked till here
 
+    # TODO: Initialise U and V intelligently
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
 
