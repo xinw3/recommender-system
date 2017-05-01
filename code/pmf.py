@@ -118,14 +118,16 @@ def RMSE(true_ratings, predict_ratings):
 
 def ALS(U, V, userMovieDict):
     subtractionMatrix = np.ndarray(shape=(D,1))
-    product = U.T.dot(V)
+    product = expit(U.T.dot(V))    # g(1-g)
+
+    product_derivative = np.multiply(expit(product), 1 - expit(product))
 
     for i in range (0, product.shape[0]):
         derivative = np.zeros((D, 1))
         for j in range(0, product.shape[1]):
             if i in userMovieDict and j in userMovieDict[i]:
                 Vj =  np.reshape(V[:,j], (D, 1))
-                derivative = derivative + (product[i][j] - userMovieDict[i][j]) * Vj
+                derivative = derivative + (product[i][j] - userMovieDict[i][j]) * product_derivative[i][j] * Vj
         Ui = np.reshape(U[:,i], (D, 1))
         derivative = derivative + (l * Ui)
         subtractionMatrix = np.hstack((subtractionMatrix , eta * derivative))
