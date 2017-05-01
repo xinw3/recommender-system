@@ -6,6 +6,7 @@ import numpy as np
 import time
 from scipy.special import expit
 from sklearn.model_selection import train_test_split
+import random
 
 data_dir = os.path.join('../', 'RSdata/')
 training_file = os.path.join(data_dir, "training_rating.dat")
@@ -38,25 +39,29 @@ def preprocess_training_file(training_data):
 
     for line in training_data:
         elements = line.rstrip("\n").split("::")
-        if has_empty(elements):
-            continue
-        else:
-            userid_list.append(int(elements[0]))
-            movieid_list.append(int(elements[1]))
-            rating_list.append(int(elements[2]))
+        userid_list.append(int(elements[0]))
+        movieid_list.append(int(elements[1]))
+        rating_list.append(int(elements[2]))
 
     return userid_list, movieid_list, rating_list
 
 def split_training_data(original_training_file):
-    valid_size = 0.25
     training_list = []
+    validation_data = []
+    print "Original Training file is ", original_training_file
     with open(original_training_file, "r") as training_data:
         for line in training_data:
-            training_list.append(line)
-
+        	elements = line.rstrip("\n").split("::")
+        	if has_empty(elements):
+            		continue
+            	training_list.append(line)
     training_data.close()
-    training_data, validation_data = train_test_split(training_list, test_size=valid_size, random_state=42)
-
+    validation_indices =  random.sample(range(0, len(training_list)), int(0.05*len(training_list)))
+    for index in validation_indices:
+    	validation_data.append(training_list[index]) 
+    training_data = np.reshape(training_list, (1, len(training_list)))
+    training_data = np.delete(training_data, validation_indices)
+    training_data = list(training_data)
     return training_data, validation_data
 
 def get_dictionaries(userid_list, movieid_list, rating_list):
@@ -154,7 +159,6 @@ def ALS(U, V, userMovieDict):
 
 def main():
     training_data, validation_data = split_training_data(training_file)
-
     training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
     valid_userid_list, valid_movieid_list, valid_rating_list = preprocess_training_file(validation_data)
 
