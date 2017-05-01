@@ -48,7 +48,6 @@ def preprocess_training_file(training_data):
 def split_training_data(original_training_file):
     training_list = []
     validation_data = []
-    print "Original Training file is ", original_training_file
     with open(original_training_file, "r") as training_data:
         for line in training_data:
         	elements = line.rstrip("\n").split("::")
@@ -58,7 +57,7 @@ def split_training_data(original_training_file):
     training_data.close()
     validation_indices =  random.sample(range(0, len(training_list)), int(0.05*len(training_list)))
     for index in validation_indices:
-    	validation_data.append(training_list[index]) 
+    	validation_data.append(training_list[index])
     training_data = np.reshape(training_list, (1, len(training_list)))
     training_data = np.delete(training_data, validation_indices)
     training_data = list(training_data)
@@ -116,9 +115,9 @@ def loss(U, V, userMovieDict):
     return loss
 
 def RMSE(true_ratings, predict_ratings):
-    num_ratings = predict_ratings.shape[0];
+    num_ratings = (predict_ratings.shape[0] - 1) * (predict_ratings.shape[1] - 1);
     sum_squared_error = np.sum(np.square(predict_ratings - true_ratings))
-    rmse = np.sqrt(np.divide(sum_squared_error, num_ratings - 1))
+    rmse = np.sqrt(np.divide(sum_squared_error, num_ratings))
     return rmse
 
 def ALS(U, V, userMovieDict):
