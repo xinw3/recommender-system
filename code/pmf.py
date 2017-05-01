@@ -147,7 +147,7 @@ def ALS(U, V, userMovieDict):
     U = U - subtractionMatrix
 
     subtractionMatrix = np.ndarray(shape=(D,1))
-    product = expit(U.T.dot(V))
+    product = U.T.dot(V)
     product_derivative = np.multiply(expit(product), 1 - expit(product))
 
     for j in range (0, product.shape[1]):
