@@ -18,9 +18,9 @@ output_file = os.path.join(data_dir, "result.csv")
 Tunable parameters
 '''
 D = 50             #number of factors
-eta = 0.8         #learning rate
-lambdaU = 0.001
-lambdaV = 0.0001
+eta = 0.01         #learning rate
+lambdaU = 0.1
+lambdaV = 0.1
 maxRating = 5
 iter = 1
 def preprocess_test_file(test_file):
@@ -128,61 +128,42 @@ def RMSE(true_ratings, predict_ratings):
     return rmse
 
 def ALS(U, V, userMovieDict):
-    global eta
-    global iter
-    eta = 0.5 * 1.0/(iter ** 0.5)
-    iter = iter + 1
-    print "Calculating New U"
-    product = U.T.dot(V)
-    diff = np.zeros((product.shape[0], product.shape[1]))
-    product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
-    for i in range (0, product.shape[0]):
-        for j in range(0, product.shape[1]):
-            if (i+1) in userMovieDict and (j+1) in userMovieDict[i+1]:
-		diff[i][j] = product[i][j] - userMovieDict[i+1][j+1]
-
-    derivative_matrix = np.multiply(diff, product_derivative)
-   
-    subtractionMatrix = np.ndarray(shape=(D,1)) 
-    for i in range(0, derivative_matrix.shape[0]):
-	summation = np.zeros((D,1))
-        for j in range(0, derivative_matrix.shape[1]):
-	    if derivative_matrix[i][j] != 0:
-	    	Vj =  np.reshape(V[:,j], (D, 1))
-	    	Vj = Vj * derivative_matrix[i][j]
-            	summation = summation + Vj
-        subtractionMatrix = np.hstack(( subtractionMatrix, summation))
-    subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
-    subtractionMatrix = subtractionMatrix + (lambdaU * U)
-    U = U - (eta *subtractionMatrix)
-    
-    print "Calculating New V"
-    product = U.T.dot(V)
-    diff = np.zeros((product.shape[0], product.shape[1]))
-    product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
-    for i in range (0, product.shape[0]):
-        for j in range(0, product.shape[1]):
-            if (i+1) in userMovieDict and (j+1) in userMovieDict[i+1]:
-		diff[i][j] = product[i][j] - userMovieDict[i+1][j+1]
-
-    derivative_matrix = np.multiply(diff, product_derivative)
-    
     subtractionMatrix = np.ndarray(shape=(D,1))
-    for j in range (0, derivative_matrix.shape[1]):
-        summation = np.zeros((D, 1))
-        for i in range(0, derivative_matrix.shape[0]):
-	    if derivative_matrix[i][j] != 0:
-            	Ui =  np.reshape(U[:,i], (D, 1))
-            	Ui = Ui * derivative_matrix[i][j]
-            	summation = summation + Ui
-        subtractionMatrix = np.hstack((subtractionMatrix , summation))
-    subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
-    subtractionMatrix  = subtractionMatrix + (lambdaV * V)
-    V = V - (eta * subtractionMatrix)
-    
-    print "ALS Round done"
-    return U, V
+    product = expit(U.T.dot(V))
 
+    product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
+
+    for i in range (0, product.shape[0]):
+        derivative = np.zeros((D, 1))
+        for j in range(0, product.shape[1]):
+            if i+1 in userMovieDict and j+1 in userMovieDict[i+1]:
+                Vj =  np.reshape(V[:,j], (D, 1))
+                derivative = derivative + (product[i][j] - userMovieDict[i+1][j+1]) * product_derivative[i][j] * Vj
+        Ui = np.reshape(U[:,i], (D, 1))
+        derivative = derivative + (lambdaU * Ui)
+        subtractionMatrix = np.hstack((subtractionMatrix , derivative))
+
+    subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
+    U = U - (eta * subtractionMatrix)
+
+    subtractionMatrix = np.ndarray(shape=(D,1))
+    product = expit(U.T.dot(V))
+    product_derivative = np.multiply(expit(product), 1 - expit(product))
+
+    for j in range (0, product.shape[1]):
+        derivative = np.zeros((D, 1))
+        for i in range(0, product.shape[0]):
+            if i+1  in userMovieDict and j+1 in userMovieDict[i+1]:
+                Ui =  np.reshape(U[:,i], (D, 1))
+                derivative = derivative + (product[i][j] - userMovieDict[i+1][j+1]) * product_derivative[i][j] * Ui
+        Vj = np.reshape(V[:,j], (D, 1))
+        derivative = derivative + (lambdaV * Vj)
+        subtractionMatrix = np.hstack((subtractionMatrix , derivative))
+
+    subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
+    V = V - (eta * subtractionMatrix)
+    return U, V
+    
 def main():
     training_data, validation_data = split_training_data(training_file)
     training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
