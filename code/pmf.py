@@ -113,8 +113,8 @@ def loss(U, V, userMovieDict):
     product = expit(U.T.dot(V))
     for i in range (0, product.shape[0]):
         for j in range(0, product.shape[1]):
-            if i in userMovieDict and j in userMovieDict[i]:
-                loss = loss + (userMovieDict[i][j] - product[i][j]) ** 2
+            if (i+1) in userMovieDict and (j+1) in userMovieDict[i+1]:
+                loss = loss + (userMovieDict[i+1][j+1] - product[i][j]) ** 2
 
     loss = loss/2
     loss = loss +  (lambdaU/2) * (LA.norm(U, 'fro') ** 2)
@@ -172,7 +172,6 @@ def main():
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
     valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
 
-    # TODO: Initialise U and V intelligently
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
 
