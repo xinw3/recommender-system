@@ -138,7 +138,7 @@ def RMSE(validDict, predicts):
     counter = 0
     for user in validDict:
 	for movie in validDict[user]:
-	    actualRating = validDict[user][movie]
+	    actualRating = (validDict[user][movie] * (maxRating - 1)) + 1
 	    predictedRating = predicts[user - 1][movie - 1]
 	    rmse = rmse + (actualRating-predictedRating)**2
             counter = counter + 1
