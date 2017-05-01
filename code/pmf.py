@@ -118,9 +118,9 @@ def RMSE(true_ratings, predict_ratings):
 
 def ALS(U, V, userMovieDict):
     subtractionMatrix = np.ndarray(shape=(D,1))
-    product = expit(U.T.dot(V))    # g(1-g)
+    product = expit(U.T.dot(V))
 
-    product_derivative = np.multiply(expit(product), 1 - expit(product))
+    product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
 
     for i in range (0, product.shape[0]):
         derivative = np.zeros((D, 1))
