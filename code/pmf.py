@@ -90,8 +90,8 @@ def normalize_ratings(ratings, K):
                  K: The upper bound of ratings
     Output: normalized value of ratings.[0, 1]
     '''
-    for r in ratings:
-        r = (r - 1) / (K - 1)
+    for i in range(len(ratings)):
+        ratings[i] = float((ratings[i] - 1)) / (K - 1)
 
     return ratings
 
@@ -161,6 +161,7 @@ def main():
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
     valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
 
+
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
 
@@ -172,7 +173,7 @@ def main():
         print lossVal
 
     # TODO: Do we need to scale back?
-    K = U.T.dot(V)
+    R_predict = U.T.dot(V)
     valid_matrix_coo = coo_matrix((valid_rating_list, (valid_userid_list, valid_movieid_list)),
                     shape=(valid_number_users, valid_number_movies), dtype='float32')
 
@@ -180,7 +181,7 @@ def main():
     movieid_counter = 0
     for userid in valid_userid_list:
         movieid = valid_movieid_list[movieid_counter]
-        rmse = RMSE(valid_matrix_coo[userid][movieid], K[userid][movieid])
+        rmse = RMSE(valid_matrix_coo[userid][movieid], R_predict[userid][movieid])
         print 'RMSE', rmse
 
     # TODO: write to result file
@@ -190,7 +191,7 @@ def main():
     # for userid in test_userid_list:
     #     movieid = test_movieid_list[movieid_counter]
     #     movieid_counter = movieid_counter + 1
-    #     val = K[userid][movieid]
+    #     val = R_predict[userid][movieid]
     #     output_fd.write(str(val))
     #     output_fd.write("\n")
     # output_fd.close()
