@@ -168,6 +168,8 @@ def ALS(U, V, ratings_matrix):
         lambdaV_matrix = np.eye(UTU.shape[0]) * lambdaV
         for v in xrange(V.shape[1]):
             V[:, v] = solve((UTU + lambdaV_matrix), ratings_matrix[:, v].T.dot(U.T))
+    pickle.dump(U, open("U", "wb"))
+    pickle.dump(V, open("V", "wb"))
 
     return U, V
 
@@ -207,6 +209,9 @@ def main():
     # U (D, 6040), V(D, 3883)
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
+
+    # U = pickle.load(open("U", "rb"))
+    # V = pickle.load(open("V", "rb"))
 
     for i in range(training_iterations):
         U, V = ALS(U, V, ratings_matrix)
