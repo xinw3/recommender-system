@@ -18,7 +18,7 @@ output_file = os.path.join(data_dir, "result.csv")
 '''
 Tunable parameters
 '''
-D = 50             #number of factors
+D = 5             #number of factors [1:20]
 eta = 0.01         #learning rate
 lambdaU = 0.1
 lambdaV = 0.1
@@ -38,16 +38,20 @@ def preprocess_test_file(test_file):
 
 # Splits each line into userid, movieid and rating
 # Generate lists for these three items
-def preprocess_training_file(training_data):
+def preprocess_training_file(training_file):
     userid_list = []
     movieid_list = []
     rating_list = []
 
-    for line in training_data:
-        elements = line.rstrip("\n").split("::")
-        userid_list.append(int(elements[0]))
-        movieid_list.append(int(elements[1]))
-        rating_list.append(int(elements[2]))
+    with open(training_file, "r") as training_data:
+        for line in training_data:
+            elements = line.rstrip("\n").split("::")
+            if has_empty(elements):
+                continue
+            else:
+                userid_list.append(int(elements[0]))
+                movieid_list.append(int(elements[1]))
+                rating_list.append(int(elements[2]))
 
     return userid_list, movieid_list, rating_list
 
@@ -74,13 +78,19 @@ def split_training_data(original_training_file):
     training_data = list(training_data)
     return training_data, validation_data
 
-# Build dictionaries for user-movie ratings
+'''
+Build dictionaries for user-movie ratings
+key: user_id
+value: (dict)
+    key: movie_id the user has rated
+    value: ratings
+'''
 def get_dictionaries(userid_list, movieid_list, rating_list):
     number_users = max(userid_list)
     number_movies = max(movieid_list)
     rating_list = normalize_ratings(rating_list)
     userMovieDict  = dict()
-    for i in range(0, len(userid_list)):
+    for i in range(len(userid_list)):
         user = userid_list[i]
         movie = movieid_list[i]
         movieRatingsDict = dict()
@@ -89,6 +99,14 @@ def get_dictionaries(userid_list, movieid_list, rating_list):
         movieRatingsDict[movie] = rating_list[i]
         userMovieDict[user] = movieRatingsDict
     return userMovieDict, number_users, number_movies
+
+# get movie indices user i rated
+# def get_movie_indices():
+#     movie_indices = dict()
+
+
+# get user indices rated movie i
+# def get_user_indices():
 
 # Helper function to remove bad lines
 def has_empty(elements):
@@ -158,10 +176,10 @@ def ALS(U, V, ratings_matrix):
         VTV = V.dot(V.T)
         lambdaU_matrix = np.eye(VTV.shape[0]) * lambdaU
         for u in xrange(U.shape[1]):
-            U[u, :] = solve((VTV + lambdaU_matrix), ratings_matrix[u, :].T.dot(V.T)
+            U[:, u] = solve((VTV + lambdaU_matrix), ratings_matrix[u, :].T.dot(V.T))
 
     # update V
-    for j in range (als_iterations):
+    for j in range(als_iterations):
         UTU = U.dot(U.T)
         lambdaV_matrix = np.eye(UTU.shape[0]) * lambdaV
         for v in xrange(V.shape[1]):
@@ -170,16 +188,20 @@ def ALS(U, V, ratings_matrix):
     return U, V
 
 def main():
-    training_data, validation_data = split_training_data(training_file)
-    training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
-    valid_userid_list, valid_movieid_list, valid_rating_list = preprocess_training_file(validation_data)
+    training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_file)
 
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
-    valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
+    # TODO: get indices
+    print 'user_id_list = %d, movieid_list = %d, rating_list = %d, number_users = %d, number_movies = %d' % (len(training_userid_list), len(training_movieid_list), len(training_rating_list), number_users, number_movies)
+    print 'user_movie_dict_shape', len(userMovieDict)
+    # ratings_matrix: size (6041, 3884)
+    ratings_matrix = np.random.uniform(low=1.0, high=5.0, size=(number_users + 1, number_movies + 1))
 
-    # TODO: replace 0 rating using mean ratings?
-    ratings_matrix = coo_matrix((ratings_list, (training_userid_list, training_movieid_list)),
-                    shape=(number_users, number_movies), dtype='float32')
+    for userid in userMovieDict:
+        for movieid in userMovieDict[userid]:
+            ratings_matrix[userid][movieid] = userMovieDict[userid][movieid]
+    print 'ratings_matrix', ratings_matrix
+
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
 
