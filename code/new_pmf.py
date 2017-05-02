@@ -143,10 +143,15 @@ def loss(U, V, userMovieDict):
     return loss
 
 
-def RMSE(pred, actual):
-    pred = pred[actual.nonzero()].flatten()
-    actual = actual[actual.nonzero()].flatten()
-    return np.sqrt(mean_squared_error(pred, actual))
+def RMSE(predicts, actual):
+    rmse = 0.0
+    counter = 0
+    for user in actual:
+    	for movie in actual[user]:
+    	    rmse = rmse + (actual[user][movie]-predicts[user - 1][movie - 1])**2
+            counter = counter + 1
+    rmse = (rmse * 1.0/counter) ** 0.5
+    return rmse
 
 
 def ALS(U, V, ratings_matrix):
@@ -204,10 +209,10 @@ def main():
         predictions = U.T.dot(V)
         # TODO:
         training_loss = loss(U, V, userMovieDict)
-        training_RMSE = RMSE(predictions, ratings_matrix)
+        training_RMSE = RMSE(predictions, userMovieDict)
 
         valid_loss = loss(U, V, valid_user_movie_dict)
-        valid_RMSE = RMSE(predictions, valid_ratings_matrix)
+        valid_RMSE = RMSE(predictions, valid_user_movie_dict)
         print "Train Loss ", training_loss
         print "Train RMSE ", training_RMSE
         print "Valid Loss ", valid_loss
