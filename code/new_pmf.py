@@ -170,10 +170,9 @@ def RMSE(validDict, predicts):
     return rmse
 
 def ALS(U, V, ratings_matrix):
-
     # update U, latent vector U, fixed vector V
     for i in range(als_iterations):
-        VTV = V.dot(V.T)
+        VTV = V.dot(V.T)    # D * D
         lambdaU_matrix = np.eye(VTV.shape[0]) * lambdaU
         for u in xrange(U.shape[1]):
             U[:, u] = solve((VTV + lambdaU_matrix), ratings_matrix[u, :].T.dot(V.T))
@@ -183,7 +182,7 @@ def ALS(U, V, ratings_matrix):
         UTU = U.dot(U.T)
         lambdaV_matrix = np.eye(UTU.shape[0]) * lambdaV
         for v in xrange(V.shape[1]):
-            V[v, :] = solve((UTU + lambdaV_matrix), ratings_matrix[:, v].T.dot(U.T))
+            V[:, v] = solve((UTU + lambdaV_matrix), ratings_matrix[:, v].T.dot(U.T))
 
     return U, V
 
@@ -192,16 +191,22 @@ def main():
 
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
     # TODO: get indices
-    print 'user_id_list = %d, movieid_list = %d, rating_list = %d, number_users = %d, number_movies = %d' % (len(training_userid_list), len(training_movieid_list), len(training_rating_list), number_users, number_movies)
-    print 'user_movie_dict_shape', len(userMovieDict)
-    # ratings_matrix: size (6041, 3884)
+    print 'user_id_list = %d, movieid_list = %d, rating_list = %d' % (len(training_userid_list), len(training_movieid_list), len(training_rating_list))
+    print 'number_users = %d, number_movies = %d' % (number_users, number_movies) # 6040, 3883
+    # print 'user_movie_dict_shape', len(userMovieDict)   # 6039
+
     ratings_matrix = np.random.uniform(low=1.0, high=5.0, size=(number_users + 1, number_movies + 1))
 
     for userid in userMovieDict:
         for movieid in userMovieDict[userid]:
             ratings_matrix[userid][movieid] = userMovieDict[userid][movieid]
-    print 'ratings_matrix', ratings_matrix
 
+    # ratings_matrix: size (6040, 3883)
+    ratings_matrix = np.delete(ratings_matrix, 0, 0)
+    ratings_matrix = np.delete(ratings_matrix, 0, 1)
+    print 'ratings_matrix', ratings_matrix.shape
+
+    # U (D, 6040), V(D, 3883)
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
 
