@@ -171,30 +171,46 @@ def main():
     valid_userid_list, valid_movieid_list, valid_rating_list = preprocess_training_file(validation_data)
 
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
+    valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
 
     # (number_users, number_movies) (6040, 3883)
     ratings_matrix = np.random.uniform(low=1.0, high=5.0, size=(number_users + 1, number_movies + 1))
+    valid_ratings_matrix = np.random.uniform(low=1.0, high=5.0, size=(valid_number_users + 1, valid_number_movies + 1))
 
+    # training_rating_matrix
     for userid in userMovieDict:
         for movieid in userMovieDict[userid]:
             ratings_matrix[userid][movieid] = userMovieDict[userid][movieid]
 
-    # ratings_matrix: size (6040, 3883)
+    # valid_rating_matrix
+    for userid in valid_user_movie_dict:
+        for movieid in valid_user_movie_dict[userid]:
+            valid_ratings_matrix[userid][movieid] = valid_user_movie_dict[userid][movieid]
+
+    # complete_ratings_matrix: size (6040, 3883)
     ratings_matrix = np.delete(ratings_matrix, 0, 0)
     ratings_matrix = np.delete(ratings_matrix, 0, 1)
+    # valid_ratings_matrix
+    valid_ratings_matrix = np.delete(ratings_matrix, 0, 0)
+    valid_ratings_matrix = np.delete(ratings_matrix, 0, 1)
 
     # U (D, 6040), V(D, 3883)
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
 
-    for i in range (0, 65):
+    for i in range (0, 50):
         U, V = ALS(U, V, ratings_matrix)
         predictions = U.T.dot(V)
         # TODO:
         training_loss = loss(U, V, userMovieDict)
         training_RMSE = RMSE(predictions, ratings_matrix)
+
+        valid_loss = loss(U, V, valid_user_movie_dict)
+        valid_RMSE = RMSE(predictions, valid_ratings_matrix)
         print "Train Loss ", training_loss
         print "Train RMSE ", training_RMSE
+        print "Valid Loss ", valid_loss
+        print "Valid RMSE ", valid_RMSE
         print ""
 
     #TESTING CODE FOLLOWS
