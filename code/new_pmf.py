@@ -38,20 +38,16 @@ def preprocess_test_file(test_file):
 
 # Splits each line into userid, movieid and rating
 # Generate lists for these three items
-def preprocess_training_file(training_file):
+def preprocess_training_file(training_data):
     userid_list = []
     movieid_list = []
     rating_list = []
 
-    with open(training_file, "r") as training_data:
-        for line in training_data:
-            elements = line.rstrip("\n").split("::")
-            if has_empty(elements):
-                continue
-            else:
-                userid_list.append(int(elements[0]))
-                movieid_list.append(int(elements[1]))
-                rating_list.append(int(elements[2]))
+    for line in training_data:
+        elements = line.rstrip("\n").split("::")
+        userid_list.append(int(elements[0]))
+        movieid_list.append(int(elements[1]))
+        rating_list.append(int(elements[2]))
 
     return userid_list, movieid_list, rating_list
 
@@ -170,7 +166,10 @@ def ALS(U, V, ratings_matrix):
     return U, V
 
 def main():
-    training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_file)
+    training_data, validation_data = split_training_data(training_file)
+    training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
+    valid_userid_list, valid_movieid_list, valid_rating_list = preprocess_training_file(validation_data)
+
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
 
     # (number_users, number_movies) (6040, 3883)
