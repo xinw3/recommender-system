@@ -24,6 +24,7 @@ lambdaU = 0
 lambdaV = 0
 maxRating = 5
 als_iterations = 10
+training_iteration = 10
 
 def preprocess_test_file(test_file):
     movieid_list = []
@@ -149,17 +150,19 @@ def RMSE(pred, actual):
 
 
 def ALS(U, V, ratings_matrix):
-    # update U, latent vector U, fixed vector V
-    VTV = V.dot(V.T)    # D * D
-    lambdaU_matrix = np.eye(VTV.shape[0]) * lambdaU
-    for u in xrange(U.shape[1]):
-        U[:, u] = solve((VTV + lambdaU_matrix), ratings_matrix[u, :].T.dot(V.T))
 
-    # update V
-    UTU = U.dot(U.T)
-    lambdaV_matrix = np.eye(UTU.shape[0]) * lambdaV
-    for v in xrange(V.shape[1]):
-        V[:, v] = solve((UTU + lambdaV_matrix), ratings_matrix[:, v].T.dot(U.T))
+    for i in range(als_iterations):
+        # update U, latent vector U, fixed vector V
+        VTV = V.dot(V.T)    # D * D
+        lambdaU_matrix = np.eye(VTV.shape[0]) * lambdaU
+        for u in xrange(U.shape[1]):
+            U[:, u] = solve((VTV + lambdaU_matrix), ratings_matrix[u, :].T.dot(V.T))
+
+        # update V
+        UTU = U.dot(U.T)
+        lambdaV_matrix = np.eye(UTU.shape[0]) * lambdaV
+        for v in xrange(V.shape[1]):
+            V[:, v] = solve((UTU + lambdaV_matrix), ratings_matrix[:, v].T.dot(U.T))
 
     return U, V
 
@@ -196,7 +199,7 @@ def main():
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
 
-    for i in range (als_iterations):
+    for i in range(training_iteration):
         U, V = ALS(U, V, ratings_matrix)
         predictions = U.T.dot(V)
         # TODO:
