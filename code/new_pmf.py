@@ -24,7 +24,7 @@ lambdaU = 0
 lambdaV = 0
 maxRating = 5
 als_iterations = 10
-training_iteration = 10
+training_iterations = 10
 
 def preprocess_test_file(test_file):
     movieid_list = []
@@ -199,7 +199,7 @@ def main():
     U = np.random.rand(D, number_users)
     V = np.random.rand(D, number_movies)
 
-    for i in range(training_iteration):
+    for i in range(training_iterations):
         U, V = ALS(U, V, ratings_matrix)
         predictions = U.T.dot(V)
         # TODO:
