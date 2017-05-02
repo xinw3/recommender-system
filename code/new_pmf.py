@@ -24,7 +24,7 @@ lambdaU = 0.1
 lambdaV = 0.1
 maxRating = 5
 als_iterations = 20
-training_iterations = 20
+training_iterations = 100
 
 def preprocess_test_file(test_file):
     movieid_list = []
@@ -207,11 +207,11 @@ def main():
     valid_ratings_matrix = np.delete(valid_ratings_matrix, 0, 1)
 
     # U (D, 6040), V(D, 3883)
-    # U = np.random.rand(D, number_users)
-    # V = np.random.rand(D, number_movies)
+    U = np.random.rand(D, number_users)
+    V = np.random.rand(D, number_movies)
 
-    U = pickle.load(open("U", "rb"))
-    V = pickle.load(open("V", "rb"))
+    # U = pickle.load(open("U", "rb"))
+    # V = pickle.load(open("V", "rb"))
 
     for i in range(training_iterations):
         U, V = ALS(U, V, ratings_matrix)
