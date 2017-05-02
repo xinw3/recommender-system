@@ -7,6 +7,7 @@ import time
 from scipy.special import expit
 import random
 import pickle
+from numpy.linalg import solve
 
 data_dir = os.path.join('../', 'RSdata/')
 training_file = os.path.join(data_dir, "training_rating.dat")
@@ -22,6 +23,7 @@ eta = 0.01         #learning rate
 lambdaU = 0.1
 lambdaV = 0.1
 maxRating = 5
+als_iterations = 10
 
 def preprocess_test_file(test_file):
     movieid_list = []
@@ -120,6 +122,7 @@ def nonnormalize_ratings(ratings):
                 ratings[i][j] = 1
     return ratings
 
+# TODO: update using matrix
 def loss(U, V, userMovieDict):
     loss = 0
     product = expit(U.T.dot(V))
@@ -133,6 +136,8 @@ def loss(U, V, userMovieDict):
     loss = loss + (lambdaV * 1.0/2) * (LA.norm(V, 'fro') ** 2)
     return loss
 
+
+# TODO: update using matrix
 def RMSE(validDict, predicts):
     rmse = 0.0
     counter = 0
@@ -146,41 +151,22 @@ def RMSE(validDict, predicts):
     rmse = (rmse * 1.0/counter) ** 0.5
     return rmse
 
-def ALS(U, V, userMovieDict):
-    subtractionMatrix = np.ndarray(shape=(D,1))
-    product = expit(U.T.dot(V))
+def ALS(U, V, ratings_matrix):
 
-    product_derivative = np.multiply(expit(product), 1 - expit(product))    # g(1-g)
+    # update U, latent vector U, fixed vector V
+    for i in range(als_iterations):
+        VTV = V.dot(V.T)
+        lambdaU_matrix = np.eye(VTV.shape[0]) * lambdaU
+        for u in xrange(U.shape[1]):
+            U[u, :] = solve((VTV + lambdaU_matrix), ratings_matrix[u, :].T.dot(V.T)
 
-    for i in range (0, product.shape[0]):
-        derivative = np.zeros((D, 1))
-        for j in range(0, product.shape[1]):
-            if i+1 in userMovieDict and j+1 in userMovieDict[i+1]:
-                Vj =  np.reshape(V[:,j], (D, 1))
-                derivative = derivative + (product[i][j] - userMovieDict[i+1][j+1]) * product_derivative[i][j] * Vj
-        Ui = np.reshape(U[:,i], (D, 1))
-        derivative = derivative + (lambdaU * Ui)
-        subtractionMatrix = np.hstack((subtractionMatrix , derivative))
+    # update V
+    for j in range (als_iterations):
+        UTU = U.dot(U.T)
+        lambdaV_matrix = np.eye(UTU.shape[0]) * lambdaV
+        for v in xrange(V.shape[1]):
+            V[v, :] = solve((UTU + lambdaV_matrix), ratings_matrix[:, v].T.dot(U.T))
 
-    subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
-    U = U - (eta * subtractionMatrix)
-
-    subtractionMatrix = np.ndarray(shape=(D,1))
-    product = expit(U.T.dot(V))
-    product_derivative = np.multiply(expit(product), 1 - expit(product))
-
-    for j in range (0, product.shape[1]):
-        derivative = np.zeros((D, 1))
-        for i in range(0, product.shape[0]):
-            if i+1  in userMovieDict and j+1 in userMovieDict[i+1]:
-                Ui =  np.reshape(U[:,i], (D, 1))
-                derivative = derivative + (product[i][j] - userMovieDict[i+1][j+1]) * product_derivative[i][j] * Ui
-        Vj = np.reshape(V[:,j], (D, 1))
-        derivative = derivative + (lambdaV * Vj)
-        subtractionMatrix = np.hstack((subtractionMatrix , derivative))
-
-    subtractionMatrix  = np.delete(subtractionMatrix , 0, 1)
-    V = V - (eta * subtractionMatrix)
     return U, V
 
 def main():
@@ -191,16 +177,17 @@ def main():
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
     valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
 
-    # U = np.random.rand(D, number_users)
-    # V = np.random.rand(D, number_movies)
-    U = pickle.load(open("U95", "rb"))
-    V = pickle.load(open("V95", "rb"))
+    # TODO: replace 0 rating using mean ratings?
+    ratings_matrix = coo_matrix((ratings_list, (training_userid_list, training_movieid_list)),
+                    shape=(number_users, number_movies), dtype='float32')
+    U = np.random.rand(D, number_users)
+    V = np.random.rand(D, number_movies)
 
     for i in range (0, 65):
-        U, V = ALS(U, V, userMovieDict)
-        pickle.dump(U, open("U"+str(i), "wb"))
-        pickle.dump(V, open("V"+str(i), "wb"))
-        predictions = nonnormalize_ratings(U.T.dot(V))
+        U, V = ALS(U, V, ratings_matrix)
+
+        predictions = U.T.dot(V)
+        # TODO:
         lossValTrain = loss(U, V, userMovieDict)
         rmseTrain = RMSE (userMovieDict, predictions)
         lossValValid = loss(U, V, valid_user_movie_dict)
