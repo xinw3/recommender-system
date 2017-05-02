@@ -18,7 +18,7 @@ output_file = os.path.join(data_dir, "result.csv")
 '''
 Tunable parameters
 '''
-D = 10             #number of factors [1:20]
+D = 8             #number of factors [1:20]
 eta = 0.01         #learning rate
 lambdaU = 0.1
 lambdaV = 0.1
@@ -222,6 +222,7 @@ def main():
 
         valid_loss = loss(U, V, valid_user_movie_dict)
         valid_RMSE = RMSE(predictions, valid_user_movie_dict)
+        print '##### training iterations %d ####' % (i)
         print "Train Loss ", training_loss
         print "Train RMSE ", training_RMSE
         print "Valid Loss ", valid_loss
