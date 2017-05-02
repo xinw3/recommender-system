@@ -189,8 +189,8 @@ def main():
     ratings_matrix = np.delete(ratings_matrix, 0, 0)
     ratings_matrix = np.delete(ratings_matrix, 0, 1)
     # valid_ratings_matrix
-    valid_ratings_matrix = np.delete(ratings_matrix, 0, 0)
-    valid_ratings_matrix = np.delete(ratings_matrix, 0, 1)
+    valid_ratings_matrix = np.delete(valid_ratings_matrix, 0, 0)
+    valid_ratings_matrix = np.delete(valid_ratings_matrix, 0, 1)
 
     # U (D, 6040), V(D, 3883)
     U = np.random.rand(D, number_users)
