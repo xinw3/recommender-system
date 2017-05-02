@@ -23,8 +23,8 @@ eta = 0.01         #learning rate
 lambdaU = 0.1
 lambdaV = 0.1
 maxRating = 5
-als_iterations = 10
-training_iterations = 10
+als_iterations = 20
+training_iterations = 20
 
 def preprocess_test_file(test_file):
     movieid_list = []
