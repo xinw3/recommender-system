@@ -1,6 +1,5 @@
 import os
 from scipy.sparse import coo_matrix
-from sklearn import preprocessing
 from numpy import linalg as LA
 import numpy as np
 import time
@@ -8,6 +7,7 @@ from scipy.special import expit
 import random
 import pickle
 from numpy.linalg import solve
+from sklearn.metrics import mean_squared_error
 
 data_dir = os.path.join('../', 'RSdata/')
 training_file = os.path.join(data_dir, "training_rating.dat")
@@ -63,16 +63,16 @@ def split_training_data(original_training_file):
     validation_data = []
     with open(original_training_file, "r") as training_data:
         for line in training_data:
-        	elements = line.rstrip("\n").split("::")
-        	if has_empty(elements):
-            		continue
-            	training_list.append(line)
+            elements = line.rstrip("\n").split("::")
+            if has_empty(elements):
+                continue
+            training_list.append(line)
     training_data.close()
     #validation_indices =  random.sample(range(0, len(training_list)), int(0.05*len(training_list)))
     #pickle.dump(validation_indices, open("validation_indices", "wb"))
     validation_indices = pickle.load(open("validation_indices", "rb"))
     for index in validation_indices:
-    	validation_data.append(training_list[index])
+        validation_data.append(training_list[index])
     training_data = np.reshape(training_list, (1, len(training_list)))
     training_data = np.delete(training_data, validation_indices)
     training_data = list(training_data)
@@ -88,7 +88,7 @@ value: (dict)
 def get_dictionaries(userid_list, movieid_list, rating_list):
     number_users = max(userid_list)
     number_movies = max(movieid_list)
-    rating_list = normalize_ratings(rating_list)
+    # rating_list = normalize_ratings(rating_list)
     userMovieDict  = dict()
     for i in range(len(userid_list)):
         user = userid_list[i]
@@ -99,14 +99,6 @@ def get_dictionaries(userid_list, movieid_list, rating_list):
         movieRatingsDict[movie] = rating_list[i]
         userMovieDict[user] = movieRatingsDict
     return userMovieDict, number_users, number_movies
-
-# get movie indices user i rated
-# def get_movie_indices():
-#     movie_indices = dict()
-
-
-# get user indices rated movie i
-# def get_user_indices():
 
 # Helper function to remove bad lines
 def has_empty(elements):
@@ -133,17 +125,16 @@ def normalize_ratings(ratings):
 def nonnormalize_ratings(ratings):
     for i in range(0, ratings.shape[0]):
         for j in range (0, ratings.shape[1]):
-	    ratings[i][j] = (ratings[i][j] * (maxRating - 1) ) + 1
-	    if (ratings[i][j] > 5):
-                ratings[i][j] = 5
+            ratings[i][j] = (ratings[i][j] * (maxRating - 1) ) + 1
+            if (ratings[i][j] > 5):
+                    ratings[i][j] = 5
             if (ratings[i][j] < 1):
                 ratings[i][j] = 1
     return ratings
 
-# TODO: update using matrix
 def loss(U, V, userMovieDict):
     loss = 0
-    product = expit(U.T.dot(V))
+    product = U.T.dot(V)
     for i in range (0, product.shape[0]):
         for j in range(0, product.shape[1]):
             if (i+1) in userMovieDict and (j+1) in userMovieDict[i+1]:
@@ -155,19 +146,11 @@ def loss(U, V, userMovieDict):
     return loss
 
 
-# TODO: update using matrix
-def RMSE(validDict, predicts):
-    rmse = 0.0
-    counter = 0
-    for user in validDict:
-	for movie in validDict[user]:
-	    actualRating = (validDict[user][movie] * (maxRating - 1)) + 1
-	    predictedRating = predicts[user - 1][movie - 1]
-	    rmse = rmse + (actualRating-predictedRating)**2
-            counter = counter + 1
+def RMSE(pred, actual):
+    pred = pred[actual.nonzero()].flatten()
+    actual = actual[actual.nonzero()].flatten()
+    return np.sqrt(mean_squared_error(pred, actual))
 
-    rmse = (rmse * 1.0/counter) ** 0.5
-    return rmse
 
 def ALS(U, V, ratings_matrix):
     # update U, latent vector U, fixed vector V
@@ -188,13 +171,9 @@ def ALS(U, V, ratings_matrix):
 
 def main():
     training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_file)
-
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
-    # TODO: get indices
-    print 'user_id_list = %d, movieid_list = %d, rating_list = %d' % (len(training_userid_list), len(training_movieid_list), len(training_rating_list))
-    print 'number_users = %d, number_movies = %d' % (number_users, number_movies) # 6040, 3883
-    # print 'user_movie_dict_shape', len(userMovieDict)   # 6039
 
+    # (number_users, number_movies) (6040, 3883)
     ratings_matrix = np.random.uniform(low=1.0, high=5.0, size=(number_users + 1, number_movies + 1))
 
     for userid in userMovieDict:
@@ -204,7 +183,6 @@ def main():
     # ratings_matrix: size (6040, 3883)
     ratings_matrix = np.delete(ratings_matrix, 0, 0)
     ratings_matrix = np.delete(ratings_matrix, 0, 1)
-    print 'ratings_matrix', ratings_matrix.shape
 
     # U (D, 6040), V(D, 3883)
     U = np.random.rand(D, number_users)
@@ -212,17 +190,12 @@ def main():
 
     for i in range (0, 65):
         U, V = ALS(U, V, ratings_matrix)
-
         predictions = U.T.dot(V)
         # TODO:
-        lossValTrain = loss(U, V, userMovieDict)
-        rmseTrain = RMSE (userMovieDict, predictions)
-        lossValValid = loss(U, V, valid_user_movie_dict)
-        rmseValid = RMSE(valid_user_movie_dict, predictions)
-        print "Train Loss ", lossValTrain
-        print "Train RMSE ", rmseTrain
-        print "ValidSet Loss ", lossValValid
-        print "ValidSet RMSE ", rmseValid
+        training_loss = loss(U, V, userMovieDict)
+        training_RMSE = RMSE(predictions, ratings_matrix)
+        print "Train Loss ", training_loss
+        print "Train RMSE ", training_RMSE
         print ""
 
     #TESTING CODE FOLLOWS
