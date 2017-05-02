@@ -18,10 +18,10 @@ output_file = os.path.join(data_dir, "result.csv")
 '''
 Tunable parameters
 '''
-D = 20             #number of factors [1:20]
+D = 5             #number of factors [1:20]
 eta = 0.01         #learning rate
-lambdaU = 0.1
-lambdaV = 0.1
+lambdaU = 0
+lambdaV = 0
 maxRating = 5
 als_iterations = 10
 
