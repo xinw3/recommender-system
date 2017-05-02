@@ -18,7 +18,7 @@ output_file = os.path.join(data_dir, "result.csv")
 '''
 Tunable parameters
 '''
-D = 5             #number of factors [1:20]
+D = 10             #number of factors [1:20]
 eta = 0.01         #learning rate
 lambdaU = 0
 lambdaV = 0
@@ -171,6 +171,10 @@ def ALS(U, V, ratings_matrix):
 
     return U, V
 
+'''
+for the names that don't have a "training" or have training
+they all refer to training data
+'''
 def main():
     training_data, validation_data = split_training_data(training_file)
     training_userid_list, training_movieid_list, training_rating_list = preprocess_training_file(training_data)
