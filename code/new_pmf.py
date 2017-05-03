@@ -153,20 +153,18 @@ def RMSE(predicts, actual):
     return rmse
 
 
-def ALS(U, V, ratings_matrix):
+def ALS(U, V, ratings_matrix, w_users, w_movies):
+    # update U, latent vector U, fixed vector V
+    VTV = (V.dot(w_movies)).dot(V.T)    # D * D
+    lambdaU_matrix = np.eye(VTV.shape[0]) * lambdaU
+    for u in range(0, U.shape[1]):
+        U[:, u] = solve((VTV + lambdaU_matrix), (ratings_matrix[u, :].T.dot(w_movies)).dot(V.T))
 
-    for i in range(als_iterations):
-        # update U, latent vector U, fixed vector V
-        VTV = V.dot(V.T)    # D * D
-        lambdaU_matrix = np.eye(VTV.shape[0]) * lambdaU
-        for u in xrange(U.shape[1]):
-            U[:, u] = solve((VTV + lambdaU_matrix), ratings_matrix[u, :].T.dot(V.T))
-
-        # update V
-        UTU = U.dot(U.T)
-        lambdaV_matrix = np.eye(UTU.shape[0]) * lambdaV
-        for v in xrange(V.shape[1]):
-            V[:, v] = solve((UTU + lambdaV_matrix), ratings_matrix[:, v].T.dot(U.T))
+    # update V
+    UTU = (U.dot(w_users)).dot(U.T)
+    lambdaV_matrix = np.eye(UTU.shape[0]) * lambdaV
+    for v in range(0, V.shape[1]):
+        V[:, v] = solve((UTU + lambdaV_matrix), (ratings_matrix[:, v].T.dot(w_users)).dot(U.T))
     pickle.dump(U, open("U", "wb"))
     pickle.dump(V, open("V", "wb"))
 
@@ -217,9 +215,11 @@ def main():
 
     # U = pickle.load(open("U", "rb"))
     # V = pickle.load(open("V", "rb"))
+    w_movies  = w_matrix.T.dot(w_matrix)
+    w_users = w_matrix.dot(w_matrix.T)
 
     for i in range(0, training_iterations):
-        U, V = ALS(U, V, ratings_matrix)
+        U, V = ALS(U, V, ratings_matrix, w_users, w_movies )
         predictions = U.T.dot(V)
         # TODO:
         training_loss = loss(U, V, userMovieDict)
