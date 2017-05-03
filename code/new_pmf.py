@@ -169,8 +169,8 @@ def ALS(U, V, ratings_matrix, users_per_movie, movies_per_user):
         ratings_matrix_v = ratings_matrix[:,v][users_per_movie[v+1]]
         second = U_sub.dot(ratings_matrix_v)
         V[:, v] = solve((UTU + lambdaV_matrix), second)
-    pickle.dump(U, open("U", "wb"))
-    pickle.dump(V, open("V", "wb"))
+    #pickle.dump(U, open("U", "wb"))
+    #pickle.dump(V, open("V", "wb"))
 
     return U, V
 
