@@ -12,7 +12,7 @@ from sklearn.metrics import mean_squared_error
 data_dir = os.path.join('../', 'RSdata/')
 training_file = os.path.join(data_dir, "training_rating.dat")
 test_file = os.path.join(data_dir, "testing.dat")
-output_file = os.path.join(data_dir, "result.csv")
+output_file = os.path.join('./', "result.csv")
 
 
 '''
@@ -24,7 +24,7 @@ lambdaU = 0.1
 lambdaV = 0.1
 maxRating = 5
 als_iterations = 20
-training_iterations = 100
+training_iterations = 1
 
 def preprocess_test_file(test_file):
     movieid_list = []
@@ -122,7 +122,6 @@ def normalize_ratings(ratings):
 def nonnormalize_ratings(ratings):
     for i in range(0, ratings.shape[0]):
         for j in range (0, ratings.shape[1]):
-            ratings[i][j] = (ratings[i][j] * (maxRating - 1) ) + 1
             if (ratings[i][j] > 5):
                     ratings[i][j] = 5
             if (ratings[i][j] < 1):
@@ -230,14 +229,18 @@ def main():
         print ""
 
     #TESTING CODE FOLLOWS
-    #userid_list, movieid_list = preprocess_test_file(test_file)
-    #U = pickle.load(open("U64", "rb"))
-    #V = pickle.load(open("V64", "rb"))
-    #ratings = U.T.dot(V)
-    #ratings = nonnormalize_ratings(ratings)
-    #for i in range(0, len(userid_list)):
-    #    user = userid_list[i]
-    #    movie = movieid_list[i]
+    userid_list, movieid_list = preprocess_test_file(test_file)
+    output = open(output_file, 'w')
+    U = pickle.load(open("U", "rb"))
+    V = pickle.load(open("V", "rb"))
+    ratings = U.T.dot(V)
+    ratings = nonnormalize_ratings(ratings)
+    for i in range(0, len(userid_list)):
+       user = userid_list[i]
+       movie = movieid_list[i]
+       output.write(str(ratings[user - 1][movie - 1]))
+       output.write("\n")
+    output.close()
     #    print ratings[user - 1][movie - 1]
 
 main()
