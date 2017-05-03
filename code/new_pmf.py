@@ -17,11 +17,10 @@ output_file = os.path.join('./', "results.csv")
 '''
 Tunable parameters
 '''
-D = 10             
-lambdaU = 0.1
-lambdaV = 0.1
+D = 5             
+lambdaVal = 0.45
 maxRating = 5
-training_iterations = 20
+training_iterations = 30
 valid_percentage = 0.05
 
 def preprocess_test_file(test_file):
@@ -150,7 +149,7 @@ def RMSE(predicts, actual):
 
 def ALS(U, V, ratings_matrix, users_per_movie, movies_per_user):
     # update U, latent vector U, fixed vector V
-    lambdaU_matrix = np.eye(D) * lambdaU
+    lambdaU_matrix = np.eye(D) * lambdaVal
     for u in range(0, U.shape[1]):
         if  u+1 not in movies_per_user:
             continue
@@ -161,7 +160,7 @@ def ALS(U, V, ratings_matrix, users_per_movie, movies_per_user):
         U[:, u] = solve((VTV + lambdaU_matrix), second)
     
     # update V
-    lambdaV_matrix = np.eye(D) * lambdaV
+    lambdaV_matrix = np.eye(D) * lambdaVal
     for v in range(0, V.shape[1]):
         if v+1 not in users_per_movie:
             continue

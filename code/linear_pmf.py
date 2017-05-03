@@ -70,9 +70,9 @@ def split_training_data(original_training_file):
             		continue
             	training_list.append(line)
     training_data.close()
-    validation_indices =  random.sample(range(0, len(training_list)), int(0.05*len(training_list)))
-    pickle.dump(validation_indices, open("validation_indices_linear", "wb"))
-    #validation_indices = pickle.load(open("validation_indices_linear", "rb"))
+    #validation_indices =  random.sample(range(0, len(training_list)), int(0.05*len(training_list)))
+    #pickle.dump(validation_indices, open("validation_indices_linear", "wb"))
+    validation_indices = pickle.load(open("validation_indices_linear", "rb"))
     for index in validation_indices:
     	validation_data.append(training_list[index])
     training_data = np.reshape(training_list, (1, len(training_list)))
@@ -204,12 +204,12 @@ def main():
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
     valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
 
-    U = np.random.rand(D, number_users)
-    V = np.random.rand(D, number_movies)
-    #U = pickle.load(open("U95", "rb"))
-    #V = pickle.load(open("V95", "rb"))
+    #U = np.random.rand(D, number_users)
+    #V = np.random.rand(D, number_movies)
+    U = pickle.load(open("LU64", "rb"))
+    V = pickle.load(open("LV64", "rb"))
 
-    for i in range (0, 65):
+    for i in range (119, 150):
         U, V = ALS(U, V, userMovieDict)
         pickle.dump(U, open("LU"+str(i), "wb"))
         pickle.dump(V, open("LV"+str(i), "wb"))
