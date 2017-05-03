@@ -130,11 +130,10 @@ def loss(U, V, ratings_matrix, w_matrix):
     product_matrix = U.T.dot(V)
     difference_matrix = ratings_matrix - product_matrix
     actual_difference_matrix = np.multiply(w_matrix, difference_matrix)
-    loss = np.sum(actual_difference_matrix)
-    print loss
+    square_matrix = np.square(actual_difference_matrix)
+    loss = np.sum(sqaure_matrix)
     loss = loss +  (lambdaU  * (LA.norm(U, 'fro')))
     loss = loss + (lambdaV * (LA.norm(V, 'fro')))
-    return loss
 
 
 def RMSE(predicts, actual):
