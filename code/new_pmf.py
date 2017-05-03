@@ -12,7 +12,7 @@ from sklearn.metrics import mean_squared_error
 data_dir = os.path.join('../', 'RSdata/')
 training_file = os.path.join(data_dir, "training_rating.dat")
 test_file = os.path.join(data_dir, "testing.dat")
-output_file = os.path.join('./', "result.csv")
+output_file = os.path.join('./', "results.csv")
 
 
 '''
