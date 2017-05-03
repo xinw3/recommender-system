@@ -84,7 +84,6 @@ def split_training_data(original_training_file):
 def get_dictionaries(userid_list, movieid_list, rating_list):
     number_users = max(userid_list)
     number_movies = max(movieid_list)
-    rating_list = normalize_ratings(rating_list)
     userMovieDict  = dict()
     for i in range(0, len(userid_list)):
         user = userid_list[i]
@@ -141,13 +140,17 @@ def loss(U, V, userMovieDict):
     loss = loss + (lambdaV * 1.0/2) * (LA.norm(V, 'fro') ** 2)
     return loss
 
-def RMSE(validDict, predicts):
+def RMSE(validDict, predicts, averageRating):
     rmse = 0.0
     counter = 0
     for user in validDict:
     	for movie in validDict[user]:
-    	    actualRating = (validDict[user][movie] * (maxRating - 1)) + 1
-    	    predictedRating = predicts[user - 1][movie - 1]
+    	    actualRating = validDict[user][movie] + averageRating
+    	    predictedRating = predicts[user - 1][movie - 1] + averageRating
+	    if (predictedRating < 1):
+                predictedRating = 1.0
+            elif (predictedRating > 5):
+		predictedRating = 5.0
     	    rmse = rmse + (actualRating-predictedRating)**2
             counter = counter + 1
 
@@ -194,10 +197,9 @@ def main():
     valid_userid_list, valid_movieid_list, valid_rating_list = preprocess_training_file(validation_data)
     
     averageRatingTrain = averageCalc(training_rating_list)
-    averageRatingValid = averageCalc(valid_rating_list)
     
     training_rating_list = subtractAverage(training_rating_list, averageRatingTrain)
-    valid_rating_list = subtractAverage(valid_rating_list, averageRatingTrain) #TODO: Use ValidAverage?
+    valid_rating_list = subtractAverage(valid_rating_list, averageRatingTrain) 
 
     userMovieDict, number_users, number_movies = get_dictionaries(training_userid_list, training_movieid_list, training_rating_list)
     valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
@@ -213,9 +215,9 @@ def main():
         pickle.dump(V, open("LV"+str(i), "wb"))
         lossValTrain = loss(U, V, userMovieDict)
         predictions = U.T.dot(V)
-        rmseTrain = RMSE (userMovieDict, predictions)
+        rmseTrain = RMSE (userMovieDict, predictions, averageRatingTrain)
         lossValValid = loss(U, V, valid_user_movie_dict)
-        rmseValid = RMSE(valid_user_movie_dict, predictions)
+        rmseValid = RMSE(valid_user_movie_dict, predictions, averageRatingTrain)
         print "Train Loss ", lossValTrain
         print "Train RMSE ", rmseTrain
         print "ValidSet Loss ", lossValValid
