@@ -19,8 +19,8 @@ Tunable parameters
 '''
 D = 50             #number of factors
 eta = 0.0001         #learning rate
-lambdaU = 0.01
-lambdaV = 0.01
+lambdaU = 0.001
+lambdaV = 0.001
 maxRating = 5
 
 def subtractAverage(rating_list, averageRating):
