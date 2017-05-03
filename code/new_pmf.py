@@ -128,17 +128,14 @@ def nonnormalize_ratings(ratings):
                 ratings[i][j] = 1
     return ratings
 
-def loss(U, V, userMovieDict):
-    loss = 0
-    product = U.T.dot(V)
-    for i in range (0, product.shape[0]):
-        for j in range(0, product.shape[1]):
-            if (i+1) in userMovieDict and (j+1) in userMovieDict[i+1]:
-                loss = loss + (userMovieDict[i+1][j+1] - product[i][j]) ** 2
-
-    loss = loss * 1.0/2
-    loss = loss +  (lambdaU * 1.0/2) * (LA.norm(U, 'fro') ** 2)
-    loss = loss + (lambdaV * 1.0/2) * (LA.norm(V, 'fro') ** 2)
+def loss(U, V, ratings_matrix, w_matrix):
+    product_matrix = U.T.dot(V)
+    difference_matrix = ratings_matrix - product_matrix
+    actual_difference_matrix = np.multiply(w_matrix, difference_matrix)
+    loss = np.sum(actual_difference_matrix)
+    print loss
+    loss = loss +  (lambdaU  * (LA.norm(U, 'fro')))
+    loss = loss + (lambdaV * (LA.norm(V, 'fro')))
     return loss
 
 
@@ -188,7 +185,7 @@ def main():
     ratings_matrix = np.zeros((number_users + 1, number_movies + 1))
     w_matrix = np.zeros((number_users + 1, number_movies + 1))
     valid_ratings_matrix = np.zeros((valid_number_users + 1, valid_number_movies + 1))
-
+    w_valid_matrix = np.zeros((valid_number_users + 1, valid_number_movies + 1))
     # training_rating_matrix
     for userid in userMovieDict:
         for movieid in userMovieDict[userid]:
@@ -199,6 +196,7 @@ def main():
     for userid in valid_user_movie_dict:
         for movieid in valid_user_movie_dict[userid]:
             valid_ratings_matrix[userid][movieid] = valid_user_movie_dict[userid][movieid]
+	    w_valid_matrix[userid][movieid] = 1
 
     # complete_ratings_matrix: size (6040, 3883)
     ratings_matrix = np.delete(ratings_matrix, 0, 0)
@@ -208,6 +206,8 @@ def main():
     # valid_ratings_matrix
     valid_ratings_matrix = np.delete(valid_ratings_matrix, 0, 0)
     valid_ratings_matrix = np.delete(valid_ratings_matrix, 0, 1)
+    w_valid_matrix = np.delete(w_valid_matrix, 0, 0)
+    w_valid_matrix = np.delete(w_valid_matrix, 0, 1)
 
     # U (D, 6040), V(D, 3883)
     U = np.random.rand(D, number_users)
@@ -221,11 +221,10 @@ def main():
     for i in range(0, training_iterations):
         U, V = ALS(U, V, ratings_matrix, w_users, w_movies )
         predictions = U.T.dot(V)
-        # TODO:
-        training_loss = loss(U, V, userMovieDict)
+        training_loss = loss(U, V, ratings_matrix, w_matrix)
         training_RMSE = RMSE(predictions, userMovieDict)
 
-        valid_loss = loss(U, V, valid_user_movie_dict)
+        valid_loss = loss(U, V, valid_ratings_matrix, w_valid_matrix)
         valid_RMSE = RMSE(predictions, valid_user_movie_dict)
         print '##### training iterations %d ####' % (i)
         print "Train Loss ", training_loss
