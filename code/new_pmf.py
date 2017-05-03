@@ -205,6 +205,8 @@ def main():
     # complete_ratings_matrix: size (6040, 3883)
     ratings_matrix = np.delete(ratings_matrix, 0, 0)
     ratings_matrix = np.delete(ratings_matrix, 0, 1)
+    w_matrix = np.delete(w_matrix, 0, 0)
+    w_matrix = np.delete(w_matrix, 0, 1)
     # valid_ratings_matrix
     valid_ratings_matrix = np.delete(valid_ratings_matrix, 0, 0)
     valid_ratings_matrix = np.delete(valid_ratings_matrix, 0, 1)
@@ -216,7 +218,7 @@ def main():
     # U = pickle.load(open("U", "rb"))
     # V = pickle.load(open("V", "rb"))
 
-    for i in range(training_iterations):
+    for i in range(0, training_iterations):
         U, V = ALS(U, V, ratings_matrix)
         predictions = U.T.dot(V)
         # TODO:
