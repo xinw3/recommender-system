@@ -19,11 +19,9 @@ output_file = os.path.join('./', "results.csv")
 Tunable parameters
 '''
 D = 7             #number of factors [1:20]
-eta = 0.01         #learning rate
-lambdaU = 0.1
-lambdaV = 0.1
+lambdaU = 0.4
+lambdaV = 0.4
 maxRating = 5
-als_iterations = 20
 training_iterations = 100
 
 def preprocess_test_file(test_file):
