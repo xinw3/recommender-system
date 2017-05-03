@@ -65,9 +65,9 @@ def split_training_data(original_training_file):
                 continue
             training_list.append(line)
     training_data.close()
-    #validation_indices =  random.sample(range(0, len(training_list)), int(0.05*len(training_list)))
-    #pickle.dump(validation_indices, open("validation_indices", "wb"))
-    validation_indices = pickle.load(open("validation_indices", "rb"))
+    validation_indices =  random.sample(range(0, len(training_list)), int(0.05*len(training_list)))
+    pickle.dump(validation_indices, open("validation_indices", "wb"))
+    #validation_indices = pickle.load(open("validation_indices", "rb"))
     for index in validation_indices:
         validation_data.append(training_list[index])
     training_data = np.reshape(training_list, (1, len(training_list)))
@@ -185,13 +185,17 @@ def main():
     valid_user_movie_dict, valid_number_users, valid_number_movies = get_dictionaries(valid_userid_list, valid_movieid_list, valid_rating_list)
 
     # (number_users, number_movies) (6040, 3883)
-    ratings_matrix = np.random.uniform(low=1.0, high=5.0, size=(number_users + 1, number_movies + 1))
-    valid_ratings_matrix = np.random.uniform(low=1.0, high=5.0, size=(valid_number_users + 1, valid_number_movies + 1))
+    #ratings_matrix = np.random.uniform(low=1.0, high=5.0, size=(number_users + 1, number_movies + 1))
+    #valid_ratings_matrix = np.random.uniform(low=1.0, high=5.0, size=(valid_number_users + 1, valid_number_movies + 1))
+    ratings_matrix = np.zeros((number_users + 1, number_movies + 1))
+    w_matrix = np.zeros((number_users + 1, number_movies + 1))
+    valid_ratings_matrix = np.zeros((valid_number_users + 1, valid_number_movies + 1))
 
     # training_rating_matrix
     for userid in userMovieDict:
         for movieid in userMovieDict[userid]:
             ratings_matrix[userid][movieid] = userMovieDict[userid][movieid]
+	    w_matrix[userid][movieid] = 1
 
     # valid_rating_matrix
     for userid in valid_user_movie_dict:
