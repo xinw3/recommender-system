@@ -131,7 +131,7 @@ def loss(U, V, ratings_matrix, w_matrix):
     difference_matrix = ratings_matrix - product_matrix
     actual_difference_matrix = np.multiply(w_matrix, difference_matrix)
     square_matrix = np.square(actual_difference_matrix)
-    loss = np.sum(sqaure_matrix)
+    loss = np.sum(square_matrix)
     loss = loss +  (lambdaU  * (LA.norm(U, 'fro')))
     loss = loss + (lambdaV * (LA.norm(V, 'fro')))
 
